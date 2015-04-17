@@ -66,7 +66,7 @@ namespace CraftingLegends.Framework
 			}
 		}
 
-		private Color _guiColor = new Color(0f, 0f, 0f, 0.8f);
+		private Color _guiColor = new Color(0f, 0f, 0f, 1f);
 		public Color guiColor
 		{
 			set
@@ -112,6 +112,9 @@ namespace CraftingLegends.Framework
 					FadeOutUpdate();
 					break;
 				case FadeType.fadeOutSuccess:
+					FadeOutUpdate();
+					break;
+				case FadeType.FadeOutFinished:
 					FadeOutUpdate();
 					break;
 				default:
@@ -201,6 +204,8 @@ namespace CraftingLegends.Framework
 		void FadeOutUpdate()
 		{
 			float progress = _currentTime / _fadeTime;
+			if (progress >= 1f)
+				progress = 1f;
 			_currentColor = Color.Lerp(_startColor, _targetColor, progress);
 
 			if (progress >= 1)

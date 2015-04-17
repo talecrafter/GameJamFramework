@@ -6,7 +6,9 @@ namespace CraftingLegends.Core
 {
     public class GameObjectPool
     {
-        private GameObject _prefab;
+        private MonoBehaviour _prefab;
+
+		private Transform _parent = null;
 
         private Stack<IPooledObject> _pool = new Stack<IPooledObject>();
         private List<IPooledObject> _activeObjects = new List<IPooledObject>();
@@ -15,10 +17,11 @@ namespace CraftingLegends.Core
         //  constructor
         // --------------------------------------------------------------------------------
 
-        public GameObjectPool(GameObject prefab)
-        {
-            _prefab = prefab;
-        }
+		public GameObjectPool(MonoBehaviour prefab, Transform parent = null)
+		{
+			_prefab = prefab;
+			_parent = parent;
+		}
 
         // ================================================================================
         //  public methods
@@ -36,7 +39,7 @@ namespace CraftingLegends.Core
                 if (newObject == null)
                     return default(IPooledObject);
 
-                newObject.isInactiveInObjectPool = true;
+                newObject.isUsedByObjectPool = true;
             }
             else
             {
@@ -71,18 +74,28 @@ namespace CraftingLegends.Core
             _pool.Push(item);
         }
 
+		public void Clear()
+		{
+			_activeObjects.Clear();
+			_pool.Clear();
+		}
+
         // ================================================================================
         //  private methods
         // --------------------------------------------------------------------------------
 
         private IPooledObject CreateNewObject(Vector3? pos = null)
         {
-            GameObject newObject = GameObjectFactory.GameObject(_prefab, position:pos);
-            IPooledObject instance = newObject.transform.GetInterface<IPooledObject>();
+			MonoBehaviour newObject = GameObjectFactory.Instantiate(_prefab, position: pos);
+
+			if (_parent != null)
+				newObject.transform.SetParent(_parent);
+
+			IPooledObject instance = newObject as IPooledObject;
 
             if (instance == null)
             {
-                Debug.LogError("Object " + _prefab + " has no Type " + typeof(IPooledObject));
+                Debug.LogError("Object " + _prefab + " is not of type " + typeof(IPooledObject));
             }
 
             return instance;

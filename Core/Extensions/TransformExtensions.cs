@@ -27,6 +27,22 @@ namespace CraftingLegends.Core
 			}
 		}
 
+		public static void DestroyChildrenDuringEditTime(this Transform root)
+		{
+			int childCount = root.childCount;
+			List<Transform> children = new List<Transform>();
+
+			for (int i = 0; i < childCount; i++)
+			{
+				children.Add(root.GetChild(i));
+			}
+
+			foreach (var item in children)
+			{
+				GameObject.DestroyImmediate(item.gameObject);
+			}
+		}
+
 		public static void AddComponentToChildren<T>(this Transform transform) where T : Component
 		{
 			int childCount = transform.childCount;
@@ -63,6 +79,32 @@ namespace CraftingLegends.Core
 				component.enabled = enabled;
 			}
 		}
+
+		#region positions
+
+		public static Vector3 GetCenter(this List<Transform> transforms)
+		{
+			Vector3 sum = Vector3.zero;
+			int count = 0;
+
+			if (transforms == null || transforms.Count == 0)
+			{
+				return sum;
+			}
+
+			for (int i = 0; i < transforms.Count; i++)
+			{
+				if (transforms[i] != null)
+				{
+					sum += transforms[i].position;
+					count++;
+				}
+			}
+
+			return sum / count;
+		}
+
+		#endregion
 
 		#region Instantiate Objects
 

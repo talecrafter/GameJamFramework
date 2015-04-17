@@ -25,6 +25,8 @@ namespace CraftingLegends.Framework
 
 		public GameObject displayObject;
 
+		public List<Renderer> excludeRendererFromEffects = new List<Renderer>();
+
 		// ================================================================================
 		//  private
 		// --------------------------------------------------------------------------------
@@ -34,6 +36,7 @@ namespace CraftingLegends.Framework
 
 		private AvatarAnimation _currentAnimation = AvatarAnimation.idle;
 
+		private FadingTimer _fadeInTimer = null;
 		private FadingTimer _fadeOutTimer = null;
 
 		private List<Material> _materials = new List<Material>();
@@ -47,7 +50,9 @@ namespace CraftingLegends.Framework
 		void Awake()
 		{
 			_actor = GetComponent<Actor>();
-			_actor.stateChanged += ActorStateChangedHandler;
+			if (_actor != null)
+				_actor.stateChanged += ActorStateChangedHandler;
+
 			_animator = displayObject.GetComponentInChildren<Animator>();
 
 			if (displayObject != null)
@@ -64,22 +69,34 @@ namespace CraftingLegends.Framework
 
 		void Update()
 		{
-			if (_animator != null)
-			{
-				if (BaseGameController.Instance.state == GameState.Running)
-				{
-					_animator.speed = 1.0f;
-				}
-				else
-				{
-					_animator.speed = 0f;
-				}
-			}
+			// TODO: had to comment this because of main character having no walk animation when steered by Sequence
+			//if (_animator != null)
+			//{
+			//	if (BaseGameController.Instance.state == GameState.Running)
+			//	{
+			//		_animator.speed = 1.0f;
+			//	}
+			//	else
+			//	{
+			//		_animator.speed = 0f;
+			//	}
+			//}
 
 			// show fadeout when game is running or has ended
 			if (BaseGameController.Instance.state == GameState.Running || BaseGameController.Instance.state == GameState.Ended)
 			{
-				if (_fadeOutTimer != null)
+				if (_fadeInTimer != null)
+				{
+					_fadeInTimer.Update();
+					ApplyFadeIn();
+
+					if (_fadeInTimer.hasEnded)
+					{
+						SetMaterialColor(new Color(1.0f, 1.0f, 1.0f, 1f));
+						_fadeInTimer = null;
+					}
+				}
+				else if (_fadeOutTimer != null)
 				{
 					_fadeOutTimer.Update();
 					ApplyFadeOut();
@@ -87,6 +104,7 @@ namespace CraftingLegends.Framework
 					if (_fadeOutTimer.hasEnded)
 					{
 						SetMaterialColor(new Color(1.0f, 1.0f, 1.0f, 0f));
+						_fadeOutTimer = null;
 					}
 				}
 			}
@@ -105,12 +123,23 @@ namespace CraftingLegends.Framework
 			}
 		}
 
+		public void FadeIn()
+		{
+			SetMaterialColor(new Color(1.0f, 1.0f, 1.0f, 0f));
+			_fadeInTimer = new FadingTimer(1f, 1f);
+		}
+
 		public void FadeOut()
 		{
 			if (_fadeOutTimer == null)
 			{
 				_fadeOutTimer = new FadingTimer(0, Actor.TIME_UNTIL_DESTRUCTION, 2.0f);
 			}
+		}
+
+		public void FadeOutFast(float time)
+		{
+			_fadeOutTimer = new FadingTimer(0f, time, time);
 		}
 
 		public void Reset()
@@ -213,6 +242,12 @@ namespace CraftingLegends.Framework
 			}
 		}
 
+		private void ApplyFadeIn()
+		{
+			Color color = new Color(1.0f, 1.0f, 1.0f, _fadeInTimer.progress);
+			SetMaterialColor(color);
+		}
+
 		private void ApplyFadeOut()
 		{
 			Color color = new Color(1.0f, 1.0f, 1.0f, _fadeOutTimer.progress);
@@ -225,7 +260,8 @@ namespace CraftingLegends.Framework
 			Renderer[] rendererList = displayObject.GetComponentsInChildren<Renderer>();
 			for (int i = 0; i < rendererList.Length; i++)
 			{
-				_materials.Add(rendererList[i].material);
+				if (!excludeRendererFromEffects.Contains(rendererList[i]))
+					_materials.Add(rendererList[i].material);
 			}
 		}
 	}

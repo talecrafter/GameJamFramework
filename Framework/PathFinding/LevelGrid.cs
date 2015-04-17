@@ -163,7 +163,7 @@ namespace CraftingLegends.Framework
 		/// </summary>
 		protected void OnDrawGizmos()
         {
-            if (!drawDebug)
+            if (!drawDebug || !Application.isPlaying)
                 return;
 
             // draw all grid fields

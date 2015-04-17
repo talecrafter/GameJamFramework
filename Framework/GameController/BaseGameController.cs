@@ -49,6 +49,8 @@ namespace CraftingLegends.Framework
 				return Application.loadedLevelName.ToLower().Contains("menu");
             }
 		}
+		public static bool isRunning { get { return Instance.state == GameState.Running; } }
+		public static bool isPaused { get { return Instance.state == GameState.Paused; } }
 
         // ================================================================================
         //  singleton
@@ -66,11 +68,13 @@ namespace CraftingLegends.Framework
 		[HideInInspector]
         public ApplicationInfo applicationInfo;
         [HideInInspector]
-        public BaseAudioManager audioManager;
+        public BaseAudioManager baseAudioManager;
         [HideInInspector]
         public Rect levelBounds;
         [HideInInspector]
         public LevelGrid levelGrid = null;
+		[HideInInspector]
+		public ScreenShake screenShake;
 
 		public IInputController inputController = null;
 		public IGamepadInput gamepadInput = null;
@@ -228,7 +232,7 @@ namespace CraftingLegends.Framework
 
             Instance = this;
 
-            audioManager = GetComponent<BaseAudioManager>();
+            baseAudioManager = GetComponent<BaseAudioManager>();
 			baseNavigationInput = GetComponent<BaseNavigationInput>();
 			applicationInfo = new ApplicationInfo();
 
@@ -241,12 +245,14 @@ namespace CraftingLegends.Framework
             return true;
         }
 
+		// use this for finding references in the scene
         protected virtual void LoadLevelData()
         {
-            // should be overriden in subclass
+			screenShake = FindObjectOfType<ScreenShake>();
         }
 
-        protected void InitLevel()
+		// use this for initialising gameplay
+        protected virtual void InitLevel()
         {
             if (isMenuLevel)
             {

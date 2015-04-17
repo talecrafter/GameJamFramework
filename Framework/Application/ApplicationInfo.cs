@@ -106,15 +106,15 @@ namespace CraftingLegends.Framework
                     hasTwoMouseButtons = true;
                     hasMouse = true;
                     break;
-                case RuntimePlatform.MetroPlayerARM:
+                case RuntimePlatform.WSAPlayerARM:
                     hasTwoMouseButtons = false;
                     hasMouse = true;
                     break;
-                case RuntimePlatform.MetroPlayerX64:
+				case RuntimePlatform.WSAPlayerX64:
                     hasTwoMouseButtons = false;
                     hasMouse = true;
                     break;
-                case RuntimePlatform.MetroPlayerX86:
+				case RuntimePlatform.WSAPlayerX86:
                     hasTwoMouseButtons = false;
                     hasMouse = true;
                     break;

@@ -8,7 +8,7 @@ namespace CraftingLegends.Framework
 	/// positions are saved internally in reversed order because they are added in that order without known length
 	/// used by GridPathController to save the last calculated path without memory allocation
 	/// </summary>
-	public class GridPath
+	public class GridPathReversed
 	{
 		private List<GridPosition> _path = new List<GridPosition>();
 		public int count = 0;

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 namespace CraftingLegends.Framework
 {
@@ -67,6 +68,7 @@ namespace CraftingLegends.Framework
 				&& _buttons.Count > 0)
 			{
 				_selected = 0;
+				//EventSystem.current.SetSelectedGameObject(_buttons[_selected].gameObject);
 				_buttons[_selected].Select();
 			}
 			else
@@ -79,6 +81,9 @@ namespace CraftingLegends.Framework
 		{
 			if (BaseGameController.Instance != null && BaseGameController.Instance.baseNavigationInput != null)
 				BaseGameController.Instance.baseNavigationInput.Remove(this);
+
+			// HACK: look into EventSystem.firstSelected in the future
+			EventSystem.current.SetSelectedGameObject(null, null);
 		}
 
 		// ================================================================================
@@ -118,7 +123,9 @@ namespace CraftingLegends.Framework
 		public virtual void InputEnter()
 		{
 			if (_selected >= 0)
+			{
 				_buttons[_selected].onClick.Invoke();
+			}
 		}
 
 		public virtual void InputBack()

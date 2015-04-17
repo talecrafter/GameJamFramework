@@ -1,3 +1,4 @@
+using UnityEngine;
 namespace CraftingLegends.Framework
 {
 	/// <summary>
@@ -5,6 +6,14 @@ namespace CraftingLegends.Framework
 	/// </summary>
 	public struct GridPosition
 	{
+		/*
+		 
+		 ^ row
+		 |
+		 o--> column
+		 
+		 */
+
 		// ======================================================================
 		//  public
 		// ----------------------------------------------------------------------
@@ -60,6 +69,33 @@ namespace CraftingLegends.Framework
 			return GridDirection.West;
 		}
 
+		public GridDirection GetBestDirection(GridPosition position)
+		{
+			GridPosition offset = position - this;
+			if (Mathf.Abs(offset.column) > Mathf.Abs(offset.row))
+			{
+				if (offset.column > 0)
+				{
+					return GridDirection.East;
+				}
+				else
+				{
+					return GridDirection.West;
+				}
+			}
+			else
+			{
+				if (offset.row > 0)
+				{
+					return GridDirection.North;
+				}
+				else
+				{
+					return GridDirection.South;
+				}
+			}
+		}
+
 		public GridPosition north { get { return GetAdjacentPosition(GridDirection.North); } }
 		public GridPosition east { get { return GetAdjacentPosition(GridDirection.East); } }
 		public GridPosition west { get { return GetAdjacentPosition(GridDirection.West); } }
@@ -94,28 +130,51 @@ namespace CraftingLegends.Framework
 			return position;
 		}
 
-		//public static bool operator == (GridPosition pos, GridPosition otherPos)
-		//{
-		//    if (pos.row == otherPos.row && pos.column == otherPos.column)
-		//        return true;
-		//    else
-		//        return false;
-		//}
+		public static GridPosition operator +(GridPosition posOne, GridPosition posTwo)
+		{
+			return posOne.NewPositionFromOffset(posTwo.column, posTwo.row);
+		}
 
-		//public static bool operator !=(GridPosition pos, GridPosition otherPos)
-		//{
-		//    if (pos.row != otherPos.row || pos.column != otherPos.column)
-		//        return true;
-		//    else
-		//        return false;
-		//}
+		public static GridPosition operator -(GridPosition posOne, GridPosition posTwo)
+		{
+			return posOne.NewPositionFromOffset(-posTwo.column, -posTwo.row);
+		}
 
-		//public override bool Equals(object obj)
-		//{
-		//    if (obj is GridPosition)
-		//        return this == (GridPosition)obj;
-		//    return false;
-		//}
+		public static GridPosition operator +(GridPosition pos, GridDirection direction)
+		{
+			return pos.GetAdjacentPosition(direction);
+		}
+
+		public static bool operator ==(GridPosition pos, GridPosition otherPos)
+		{
+			if (pos.row == otherPos.row && pos.column == otherPos.column)
+				return true;
+			else
+				return false;
+		}
+
+		public static bool operator !=(GridPosition pos, GridPosition otherPos)
+		{
+			if (pos.row != otherPos.row || pos.column != otherPos.column)
+				return true;
+			else
+				return false;
+		}
+
+		public override int GetHashCode()
+		{
+			int hash = 13;
+			hash = (hash * 7) + column.GetHashCode();
+			hash = (hash * 7) + row.GetHashCode();
+			return hash;
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is GridPosition)
+				return this == (GridPosition)obj;
+			return false;
+		}
 
 		public override string ToString()
 		{
@@ -130,6 +189,13 @@ namespace CraftingLegends.Framework
 				return true;
 			else
 				return false;
+		}
+
+		public bool IsAdjacent(GridPosition checkPoint)
+		{
+			int distanceX = UnityEngine.Mathf.Abs(this.column - checkPoint.column);
+			int distanceY = UnityEngine.Mathf.Abs(this.row - checkPoint.row);
+			return distanceX + distanceY == 1;
 		}
 	}
 }

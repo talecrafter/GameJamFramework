@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using CraftingLegends.Core;
+using System.Collections.Generic;
 
 namespace CraftingLegends.Framework
 {
@@ -13,10 +14,32 @@ namespace CraftingLegends.Framework
 
 	public class CameraSmoothFollow2D : MonoBehaviour
 	{
-		private const float TARGET_REACHED_DISTANCE = 0.8f;
-
 		// optional target
-		public Transform target;
+		private Transform _target = null;
+		public Transform target
+		{
+			get { return _target; }
+			set
+			{
+				_targets = null;
+				_target = value;
+			}
+		}
+		private List<Transform> _targets = null;
+		public List<Transform> targets
+		{
+			get { return _targets; }
+			set
+			{
+				target = null;
+				_targets = value;
+			}
+		}
+
+		public bool hasTarget
+		{
+			get { return _targets != null || _target != null; }
+		}
 
 		[SerializeField]
 		public MoveDirection direction = MoveDirection.HorizontalAndVertical;
@@ -40,20 +63,6 @@ namespace CraftingLegends.Framework
 
 		private bool _canMoveRight = false;
 		public bool canMoveRight { get { return _canMoveRight; } }
-
-		public bool targetIsReached
-		{
-			get
-			{
-				if (target == null)
-					return true;
-
-				if (Vector2.Distance(_transform.position, target.position) < TARGET_REACHED_DISTANCE)
-					return true;
-
-				return false;
-			}
-		}
 
 		// ================================================================================
 		//  private
@@ -83,8 +92,14 @@ namespace CraftingLegends.Framework
 
 		protected void LateUpdate()
 		{
-			if (target)
+			if (hasTarget)
+			{
 				FollowTarget();
+			}
+			else if (_checkForBounds)
+			{
+				ApplyBounds();
+			}
 		}
 
 		// ================================================================================
@@ -165,7 +180,7 @@ namespace CraftingLegends.Framework
 		private void Init()
 		{
 			_camera = Camera.main;
-			_transform = _camera.transform;
+			_transform = transform;
 
 			LevelBoundaries levelBoundaries = FindObjectOfType<LevelBoundaries>();
 
@@ -178,70 +193,80 @@ namespace CraftingLegends.Framework
 			float horizontalScale = 1.0f;
 			float verticalScale = 1.0f;
 
+			Vector3 targetPos = GetTargetPosition();
+
 			if (_checkForBounds)
 			{
 				// left smooth edge
-				if (target.position.x < _transform.position.x
+				if (targetPos.x < _transform.position.x
 					&& cameraRect.x > _bounds.x && cameraRect.x < _innerBounds.x)
 				{
 					horizontalScale = 1.0f + (cameraRect.x - _innerBounds.x) / smoothEdge;
 				}
 				// right smooth edge
-				else if (target.position.x > _transform.position.x
+				else if (targetPos.x > _transform.position.x
 					&& cameraRect.xMax > _innerBounds.xMax && cameraRect.xMax < _bounds.xMax)
 				{
 					horizontalScale = 1.0f - (cameraRect.xMax - _innerBounds.xMax) / smoothEdge;
 				}
 				// hard left edge
-				else if (target.position.x < _transform.position.x
+				else if (targetPos.x < _transform.position.x
 					&& cameraRect.x <= _bounds.x)
 				{
 					horizontalScale = 0;
 				}
 				// hard right edge
-				else if (target.position.x > _transform.position.x
+				else if (targetPos.x > _transform.position.x
 					&& cameraRect.xMax >= _bounds.xMax)
 				{
 					horizontalScale = 0;
 				}
 
 				// bottom edge
-				if (target.position.y < _transform.position.y
+				if (targetPos.y < _transform.position.y
 					&& cameraRect.y > _bounds.y && cameraRect.y < _innerBounds.y)
 				{
 					verticalScale = 1.0f + (cameraRect.y - _innerBounds.y) / smoothEdge;
 				}
 				// top edge
-				else if (target.position.y > _transform.position.y
+				else if (targetPos.y > _transform.position.y
 					&& cameraRect.yMax > _innerBounds.yMax && cameraRect.yMax < _bounds.yMax)
 				{
 					verticalScale = 1.0f - (cameraRect.yMax - _innerBounds.yMax) / smoothEdge;
 				}
 				// hard bottom edge
-				else if (target.position.y < _transform.position.y
+				else if (targetPos.y < _transform.position.y
 					&& cameraRect.y <= _bounds.y)
 				{
 					verticalScale = 0;
 				}
 				// hard top edge
-				else if (target.position.y > _transform.position.y
+				else if (targetPos.y > _transform.position.y
 					&& cameraRect.yMax >= _bounds.yMax)
 				{
 					verticalScale = 0;
 				}
 			}
 
-			float targetX = Mathf.Lerp(_transform.position.x, target.position.x, horizontalFollowSpeed * Time.deltaTime * horizontalScale);
+			float targetX = Mathf.Lerp(_transform.position.x, targetPos.x, horizontalFollowSpeed * Time.deltaTime * horizontalScale);
 			if (direction == MoveDirection.Vertical)
 				targetX = _transform.position.x;
 
-			float targetY = Mathf.Lerp(_transform.position.y, target.position.y, verticalFollowSpeed * Time.deltaTime * verticalScale);
+			float targetY = Mathf.Lerp(_transform.position.y, targetPos.y, verticalFollowSpeed * Time.deltaTime * verticalScale);
 			if (direction == MoveDirection.Horizontal)
 				targetY = _transform.position.y;
 
-			transform.position = new Vector3(targetX, targetY, transform.position.z);
+			_transform.position = new Vector3(targetX, targetY, _transform.position.z);
 
 			ApplyBounds();
+		}
+
+		private Vector3 GetTargetPosition()
+		{
+			if (_target != null)
+				return _target.position;
+
+			return _targets.GetCenter();
 		}
 
 		protected void ApplyBounds()

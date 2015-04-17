@@ -6,15 +6,27 @@ namespace CraftingLegends.Framework
 {
 	public class ParallaxLayer : MonoBehaviour
 	{
+		public enum ParallaxDirection
+		{
+			Horizontal,
+			Vertical,
+			Both
+		}
+
+		public ParallaxDirection direction = ParallaxDirection.Horizontal;
+
 		// 0 -> exactly as camera
 		// 1 -> staying exactly in the background
-		public float scale;
+		public float scaleHorizontal;
+		public float scaleVertical;
 
 		private Transform _cameraTransform;
 		private Transform _transform;
 
 		float _cameraStartX;
 		float _layerStartX;
+		float _cameraStartY;
+		float _layerStartY;
 
 		// ================================================================================
 		//  unity methods
@@ -23,12 +35,15 @@ namespace CraftingLegends.Framework
 		void Awake()
 		{
 			_cameraTransform = Camera.main.transform;
-			_cameraStartX = _cameraTransform.position.x;
 			_transform = transform;
+
+			_cameraStartX = _cameraTransform.position.x;
+			_cameraStartY = _cameraTransform.position.y;
 			_layerStartX = _transform.position.x;
+			_layerStartY = _transform.position.y;
 		}
 
-		void Update()
+		void LateUpdate()
 		{
 			UpdatePosition();
 		}
@@ -39,11 +54,21 @@ namespace CraftingLegends.Framework
 
 		private void UpdatePosition()
 		{
-			float distance = _cameraTransform.position.x - _cameraStartX;
+			Vector3 newPos = _transform.position;
 
-			float newHorizontalPos = _layerStartX + distance * scale;
+			if (direction == ParallaxDirection.Horizontal || direction == ParallaxDirection.Both)
+			{
+				float hDistance = _cameraTransform.position.x - _cameraStartX;
+				newPos.x = _layerStartX + hDistance * scaleHorizontal;
+			}
 
-			_transform.position = new Vector3(newHorizontalPos, _transform.position.y, _transform.position.z);
+			if (direction == ParallaxDirection.Vertical || direction == ParallaxDirection.Both)
+			{
+				float vDistance = _cameraTransform.position.y - _cameraStartY;
+				newPos.y = _layerStartY + vDistance * scaleVertical;
+			}
+
+			_transform.position = newPos;
 		}
 	}
 }

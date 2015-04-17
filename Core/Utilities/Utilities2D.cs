@@ -88,5 +88,11 @@ namespace CraftingLegends.Core
 			Vector3 r = new Vector3(0, 0, Mathf.Atan2((toVector.y - fromVector.y), (toVector.x - fromVector.x)) * Mathf.Rad2Deg);
 			return Quaternion.Euler(r);
 		}
+
+		public static Quaternion GetRotationFromDirection(Vector2 direction)
+		{
+			var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+			return Quaternion.AngleAxis(angle, Vector3.forward);
+		}
 	}
 }

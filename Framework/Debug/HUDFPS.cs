@@ -4,12 +4,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
-namespace CraftingLegends.Famework {
+namespace CraftingLegends.Framework {
 
 	public class HUDFPS : MonoBehaviour
 	{
 
-		// Attach this to a GUIText to make a frames/second indicator.
+		// Attach this to a Text component to make a frames/second indicator.
 		//
 		// It calculates frames/second over each updateInterval,
 		// so the display does not keep changing wildly.

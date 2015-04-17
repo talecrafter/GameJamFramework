@@ -47,7 +47,7 @@ namespace CraftingLegends.Framework
 			_fadeOutTime = fadeOutTime;
 			_fullDuration = fullDuration;
 
-			updateTime();
+			UpdateTime();
 		}
 
 		// simplified with fade in only
@@ -75,7 +75,7 @@ namespace CraftingLegends.Framework
 		public void Update()
 		{
 			_elapsedTime += Time.deltaTime;
-			updateTime();
+			UpdateTime();
 		}
 
 		public void Reset()
@@ -95,7 +95,7 @@ namespace CraftingLegends.Framework
 		//	private methods
 		// ----------------------------------------------------------------------
 
-		private void updateTime()
+		private void UpdateTime()
 		{
 			if (_elapsedTime > _fullDuration && !_holdAfterFadeIn)
 			{

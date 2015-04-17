@@ -6,7 +6,7 @@
 
 */
 
-#if !UNITY_WP8
+#if !UNITY_WINRT
 #define PARSE_ESCAPED_UNICODE
 #endif
 

@@ -141,7 +141,8 @@ namespace CraftingLegends.Framework
                         NextNodeInPath();
                         if (!_hasPath)
                         {
-                            ReachTarget();
+							_calculatePathAtNextPossibility = true;
+                            ReachTarget(); // TODO: this line was disabled in Indomitable - why?
                         }
                     }
                 }
@@ -304,8 +305,14 @@ namespace CraftingLegends.Framework
             if (_pathField != null && _protagonist.movementSpeed > 0)
             {
 				_pathField.GetPath(_protagonistTransform.position, GetFinalTargetPosition(), _path);
-                if (_path.isValid)
-                    _hasPath = true;
+                _hasPath = _path.isValid;
+				if (!_hasPath)
+				{
+					if (type == TargetType.Position)
+					{
+						ReachTarget();
+					}
+				}
             }
         }
 

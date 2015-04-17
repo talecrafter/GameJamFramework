@@ -31,11 +31,12 @@ namespace CraftingLegends.Framework
 
 		void OnDrawGizmos()
 		{
-			Transform _transform = transform;
+			Transform transform = this.transform;
+			Camera camera = GetComponentInChildren<Camera>();
 			Gizmos.color = lineColor;
 
-			float vDistance = Camera.main.orthographicSize;	// orthographic size is half of camera height
-			float hDistance = Camera.main.aspect * Camera.main.orthographicSize;
+			float vDistance = camera.orthographicSize;	// orthographic size is half of camera height
+			float hDistance = camera.aspect * camera.orthographicSize;
 
 			// horizontal lines
 			if (drawHorizontalLines || drawRectangle)
@@ -47,13 +48,13 @@ namespace CraftingLegends.Framework
 				}
 
 				// draw bottom line
-				Vector3 leftPos = new Vector3(_transform.position.x - h, _transform.position.y - vDistance, -1.0f);
-				Vector3 rightPos = new Vector3(_transform.position.x + h, _transform.position.y - vDistance, -1.0f);
+				Vector3 leftPos = new Vector3(transform.position.x - h, transform.position.y - vDistance, -1.0f);
+				Vector3 rightPos = new Vector3(transform.position.x + h, transform.position.y - vDistance, -1.0f);
 				Gizmos.DrawLine(leftPos, rightPos);
 
 				// draw top line
-				leftPos = new Vector3(_transform.position.x - h, _transform.position.y + vDistance, -1.0f);
-				rightPos = new Vector3(_transform.position.x + h, _transform.position.y + vDistance, -1.0f);
+				leftPos = new Vector3(transform.position.x - h, transform.position.y + vDistance, -1.0f);
+				rightPos = new Vector3(transform.position.x + h, transform.position.y + vDistance, -1.0f);
 				Gizmos.DrawLine(leftPos, rightPos);
 			}
 
@@ -67,13 +68,13 @@ namespace CraftingLegends.Framework
 				}
 
 				// draw left line
-				Vector3 leftPos = new Vector3(_transform.position.x - hDistance, _transform.position.y - v, -1.0f);
-				Vector3 rightPos = new Vector3(_transform.position.x - hDistance, _transform.position.y + v, -1.0f);
+				Vector3 leftPos = new Vector3(transform.position.x - hDistance, transform.position.y - v, -1.0f);
+				Vector3 rightPos = new Vector3(transform.position.x - hDistance, transform.position.y + v, -1.0f);
 				Gizmos.DrawLine(leftPos, rightPos);
 
 				// draw right line
-				leftPos = new Vector3(_transform.position.x + hDistance, _transform.position.y - v, -1.0f);
-				rightPos = new Vector3(_transform.position.x + hDistance, _transform.position.y + v, -1.0f);
+				leftPos = new Vector3(transform.position.x + hDistance, transform.position.y - v, -1.0f);
+				rightPos = new Vector3(transform.position.x + hDistance, transform.position.y + v, -1.0f);
 				Gizmos.DrawLine(leftPos, rightPos);
 			}
 		}

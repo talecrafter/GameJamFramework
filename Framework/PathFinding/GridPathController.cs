@@ -19,7 +19,7 @@ namespace CraftingLegends.Framework
 		//  public
 		// ----------------------------------------------------------------------
 
-		public GridPath gridPath = new GridPath();   // last path calculated
+		public GridPathReversed gridPath = new GridPathReversed();   // last path calculated
 
 		// ======================================================================
 		//  private

@@ -28,9 +28,26 @@ namespace CraftingLegends.Core
 			return texture;
 		}
 
-		public static Vector2 MouseToScreenCoords()
+		public static Vector2 mouseInScreenSpace
 		{
-			return new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+			get {
+				return new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+			}
+		}
+
+		public static Vector2 relativeMousePosition
+		{
+			get
+			{
+				return new Vector2(Input.mousePosition.x / Screen.width, Input.mousePosition.y / Screen.height);
+			}
+		}
+
+		public static Vector2 mouseInWorldSpace
+		{
+			get {
+				return Camera.main.ScreenToWorldPoint(Input.mousePosition);
+			}
 		}
 
 		public static Vector3 GetNormalizedDirection(Vector3 fromPos, Vector3 toPos)
@@ -133,6 +150,20 @@ namespace CraftingLegends.Core
 		public static Color ColorFromInt(int red, int green, int blue)
 		{
 			return new Color(red / 255f, green / 255f, blue / 255f);
+		}
+
+		public static string ColorToHex(Color32 color)
+		{
+			string hex = color.r.ToString("X2") + color.g.ToString("X2") + color.b.ToString("X2");
+			return hex;
+		}
+		
+		public static Color HexToColor(string hex)
+		{
+			byte r = byte.Parse(hex.Substring(0,2), System.Globalization.NumberStyles.HexNumber);
+			byte g = byte.Parse(hex.Substring(2,2), System.Globalization.NumberStyles.HexNumber);
+			byte b = byte.Parse(hex.Substring(4,2), System.Globalization.NumberStyles.HexNumber);
+			return new Color32(r,g,b, 255);
 		}
 	}
 }

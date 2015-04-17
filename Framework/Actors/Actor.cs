@@ -26,6 +26,9 @@ namespace CraftingLegends.Framework
 		public delegate void DeathExecutionDelegate();
 		public DeathExecutionDelegate deathExecutionHandler;
 
+		public delegate void WasDamagedDelegate();
+		public event WasDamagedDelegate wasDamaged;
+
 		// ================================================================================
 		//  state and events
 		// --------------------------------------------------------------------------------
@@ -76,15 +79,23 @@ namespace CraftingLegends.Framework
 
 		public float maxHealth = 10.0f;
 		public float health = 10.0f;
+		public bool needsHealing
+		{
+			get
+			{
+				return isAlive && health < maxHealth;
+			}
+		}
 		private float _startHealth;
 
-		public Weapon weapon;
 		public float movementSpeed = 6.0f;
 
 		[HideInInspector]
 		public Target target;
 
 		public Vector2 lookDirection = Vector2.zero;
+
+		public Transform actionPivot;
 
 		// ================================================================================
 		//  getters and setters
@@ -124,6 +135,12 @@ namespace CraftingLegends.Framework
 
 		#endregion
 
+		#region actions
+
+		public IActorAction action;
+
+		#endregion
+
 		#region display
 		// ================================================================================
 		//  display
@@ -154,7 +171,8 @@ namespace CraftingLegends.Framework
 		private Rigidbody2D _rigidbody2D;
 		private Collider2D _collider2D;
 		private Timer _actionTimer = null;
-		private Actor _targetActor = null;
+
+		private Vector3 _lastMovement = Vector3.zero;
 		#endregion
 
 		// ================================================================================
@@ -166,8 +184,8 @@ namespace CraftingLegends.Framework
 		void Awake()
 		{
 			_transform = transform;
-			_rigidbody2D = rigidbody2D;
-			_collider2D = collider2D;
+			_rigidbody2D = GetComponent<Rigidbody2D>();
+			_collider2D = GetComponent<Collider2D>();
 			_animationController = _transform.GetInterface<IAnimationController>();
 			target = new Target(this, _transform);
 
@@ -190,7 +208,8 @@ namespace CraftingLegends.Framework
 		void FixedUpdate()
 		{
 			// do nothing when game is not running
-			if (BaseGameController.Instance.state != GameState.Running && BaseGameController.Instance.state != GameState.Sequence)
+			if (BaseGameController.Instance == null ||
+				(BaseGameController.Instance.state != GameState.Running && BaseGameController.Instance.state != GameState.Sequence))
 				return;
 
 			// slow movement
@@ -240,14 +259,6 @@ namespace CraftingLegends.Framework
 				}
 			}
 
-			// resume actions when idle
-			if (state == ActorState.Idle && target.hasTarget
-				&& !(weapon.type == Weapon.WeaponType.Healing && target.otherActor != null && target.otherActor.health >= target.otherActor.maxHealth))
-			{
-				state = ActorState.Moving;
-				return;
-			}
-
 			// update action
 			if (_actionTimer != null)
 			{
@@ -257,6 +268,19 @@ namespace CraftingLegends.Framework
 					state = ActorState.Idle;
 					_actionTimer = null;
 				}
+				else
+				{
+					return; // wait for actions to finish
+				}
+			}
+
+			// resume actions when idle
+			if (state == ActorState.Idle && target.hasTarget
+				//&& !(weapon.type == WeaponType.Healing && target.otherActor != null && target.otherActor.health >= target.otherActor.maxHealth)
+				)
+			{
+				state = ActorState.Moving;
+				return;
 			}
 		}
 
@@ -268,6 +292,13 @@ namespace CraftingLegends.Framework
 
 		#region state manipulation
 
+		public void MakeInActive()
+		{
+			target.DisableTarget();
+
+			state = ActorState.Disabled;
+		}
+
 		public void Disable()
 		{
 			target.DisableTarget();
@@ -276,6 +307,11 @@ namespace CraftingLegends.Framework
 
 			if (!_isInactiveInObjectPool)
 				Destroy(gameObject);
+		}
+
+		public void Kill()
+		{
+			ApplyDamage(health);
 		}
 
 		public void SetToDead()
@@ -319,6 +355,9 @@ namespace CraftingLegends.Framework
 			{
 				ShowDamageDisplay(0.15f, new Color(1.0f, 0.4f, 0.4f, 1.0f)); // red color
 			}
+
+			if (wasDamaged != null)
+				wasDamaged();
 		}
 
 		// increase health, can be called from outside
@@ -337,7 +376,7 @@ namespace CraftingLegends.Framework
 				health = maxHealth;
 			}
 
-			ShowDamageDisplay(0.3f, new Color(0.58f, 0.91f, 0.82f)); // turquoise color
+			//ShowDamageDisplay(0.3f, new Color(0.58f, 0.91f, 0.82f)); // turquoise color
 		}
 
 		#endregion
@@ -374,9 +413,9 @@ namespace CraftingLegends.Framework
 			if (!isAlive)
 				return;
 
-			if (weapon != null)
+			if (action != null)
 			{
-				target.SetTarget(otherActor, weapon.range * 0.9f, determined);
+				target.SetTarget(otherActor, action.range * 0.9f, determined);
 			}
 
 			if (state == ActorState.Idle)
@@ -414,49 +453,15 @@ namespace CraftingLegends.Framework
 
 		#endregion
 
-		#region animation callbacks
+		#region helper methods
 
-		public void ExecuteAttack()
+		public Actor GetNearest(List<Actor> otherActors)
 		{
-			if (!isAlive)
-				return;
+			otherActors.Sort(
+				(firstObject, secondObject) =>
+				Vector2.SqrMagnitude(secondObject.position2D - position2D).CompareTo(Vector2.SqrMagnitude(firstObject.position2D - position2D)));
 
-			if (_targetActor == null)
-				return;
-
-			// melee
-			if (weapon.type == Weapon.WeaponType.Melee)
-			{
-				_targetActor.ApplyDamage(weapon.amount);
-			}
-			else if (weapon.type == Weapon.WeaponType.Healing)
-			{
-				_targetActor.ApplyHealing(weapon.amount);
-			}
-			else // range
-			{
-				// calculate target position from character movement
-				Vector2 targetPos = _targetActor.GetEstimatedFuturePosition(weapon.rangeDelay + 0.3f);   // 0.5f => estimated time from shell spawn to hit
-
-				// check max distance
-				Vector2 direction = targetPos - position2D;
-				if (direction.magnitude > weapon.range)
-				{
-					targetPos = position2D + direction.normalized * weapon.range;
-
-					// do not follow target anymore
-					target.DisableTarget();
-				}
-
-				// randomize target location by weapon precision
-				if (weapon.precision < 1.0f)
-				{
-					targetPos += Random.insideUnitCircle * (1.0f - weapon.precision) * 10.0f;
-				}
-
-				// create shell
-				StartCoroutine(CreateShellObject(targetPos, weapon.shellPrefab, weapon.rangeDelay));
-			}
+			return otherActors.First();
 		}
 
 		#endregion
@@ -474,7 +479,7 @@ namespace CraftingLegends.Framework
 		void OnCollisionEnter2D(Collision2D coll)
 		{
 			// only relevant for moving objects which have a target
-			if (movementSpeed <= 0 || _rigidbody2D == null || !target.hasTarget)
+			if (movementSpeed <= 0 || _rigidbody2D == null || target == null || !target.hasTarget)
 				return;
 
 			Vector2 targetLocation = target.GetCurrentTargetLocation();
@@ -508,13 +513,14 @@ namespace CraftingLegends.Framework
 			if (target.isReached)
 			{
 				// attack if possible
-				if (target.type == Target.TargetType.Actor)
+				if (target.type == Target.TargetType.Actor && TargetInReach()
+					&& action != null)
 				{
-					Attack(target.otherActor);
+					TakeAction(target.otherActor);
 					return;
 				}
 
-				HaltMovement();
+				HaltMovement(); // TODO: these two lines were disabled in Indomitable - why?
 				return;
 			}
 
@@ -526,6 +532,13 @@ namespace CraftingLegends.Framework
 
 			// update look direction
 			SetLookDirectionToTarget(targetLocation);
+		}
+
+		// Hack; should not be necessary to double check this
+		private bool TargetInReach()
+		{
+			Vector2 direction = position2D - target.otherActor.position2D;
+			return direction.magnitude <= action.range;
 		}
 
 		private void Move(Vector2 moveDirection)
@@ -558,37 +571,39 @@ namespace CraftingLegends.Framework
 			{
 				isMoving = false;
 			}
+
+			_lastMovement = movement; // save movement value to calculate future position for targeting this Actor
 		}
 
-		private void Attack(Actor enemy)
+		private void TakeAction(Actor targetActor)
 		{
 			if (!isAlive)
 				return;
 
-			if (weapon == null)
-			{
-				Debug.Log("Actor " + gameObject.name + " tries to attack but has no weapon");
-			}
-
-			_actionTimer = new Timer(weapon.attackDuration);
+			_actionTimer = new Timer(action.cooldown);
 			isMoving = false;
-			_targetActor = enemy;
 
 			// update look direction
-			SetLookDirectionToTarget(enemy.position2D);
+			SetLookDirectionToTarget(targetActor.position2D);
 
 			state = ActorState.TakingAction;
 
-			// now wait for animation to trigger Execution
+			action.Execute();
 		}
 
 		private Vector2 EstimateFuturePosition(float time)
 		{
 			Vector2 futurePos = position2D;
 
-			if (isAlive && isMoving && target.hasTarget)
+			if (isAlive && isMoving)
 			{
-				Vector2 direction = Utilities2D.GetNormalizedDirection(futurePos, target.GetFinalTargetPosition());
+				Vector2 direction = _lastMovement.normalized;
+
+				if (target.hasTarget)
+				{
+					direction = Utilities2D.GetNormalizedDirection(futurePos, target.GetFinalTargetPosition());
+				}
+
 				futurePos = futurePos + direction * time * movementSpeed;
 			}
 
@@ -615,11 +630,11 @@ namespace CraftingLegends.Framework
 				_collider2D.enabled = false;
 
 			float timeUntilDestroy = TIME_UNTIL_DESTRUCTION; // deathtime
-															 // expand time if there is a possibility of gun launch
-			if (weapon != null && weapon.type == Weapon.WeaponType.Artillery && (weapon.rangeDelay * 1.1f > timeUntilDestroy))
-			{
-				timeUntilDestroy = weapon.rangeDelay * 1.1f;
-			}
+			// expand time if there is a possibility of gun launch
+			//			if (weapon != null && weapon.type == WeaponType.Artillery && (weapon.rangeDelay * 1.1f > timeUntilDestroy))
+			//			{
+			//				timeUntilDestroy = weapon.rangeDelay * 1.1f;
+			//			}
 
 			if (_isInactiveInObjectPool)
 			{
@@ -692,17 +707,6 @@ namespace CraftingLegends.Framework
 
 		#endregion
 
-		#region helper methods
-
-		private IEnumerator CreateShellObject(Vector2 targetPos, GameObject prefab, float delay)
-		{
-			yield return new WaitForSeconds(delay);
-			Vector3 shellPosition = new Vector3(targetPos.x, targetPos.y, targetPos.y);
-			Instantiate(prefab, shellPosition, Quaternion.identity);
-		}
-
-		#endregion
-
 		#region ITogglable implementation
 
 		public void ToggleOn()
@@ -721,7 +725,7 @@ namespace CraftingLegends.Framework
 		public event System.Action<IPooledObject> isDisabled;
 
 		private bool _isInactiveInObjectPool = false;
-		public bool isInactiveInObjectPool
+		public bool isUsedByObjectPool
 		{
 			get
 			{

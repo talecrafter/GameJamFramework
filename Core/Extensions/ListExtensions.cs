@@ -15,6 +15,24 @@ namespace CraftingLegends.Core
 			return source[i];
 		}
 
+		public static List<T> PickRandom<T>(this List<T> source, int count)
+		{
+			if (source.Count == 0)
+				return new List<T>();
+
+			if (count > source.Count)
+				count = source.Count;
+
+			List<T> sourceCopy = source.Clone();
+			List<T> selection = new List<T>();
+
+			for (int i = 0; i < count; i++) {
+				selection.Add(sourceCopy.PopRandom());
+			}
+
+			return selection;
+		}
+
 		public static T PopRandom<T>(this List<T> source)
 		{
 			if (source.Count == 0)

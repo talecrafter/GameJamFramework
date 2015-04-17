@@ -7,9 +7,14 @@ namespace CraftingLegends.Core
 
 	public static class RectExtensions
 	{
-		public static Vector2 TopLeft(this Rect rect)
+		public static Vector2 BottomLeft(this Rect rect)
 		{
 			return new Vector2(rect.xMin, rect.yMin);
+		}
+
+		public static Vector2 TopRight(this Rect rect)
+		{
+			return new Vector2(rect.xMax, rect.yMax);
 		}
 
 		public static Rect Expand(this Rect rect, float delta)

@@ -7,6 +7,6 @@ namespace CraftingLegends.Core
         void ToggleOn();
         void ToggleOff();
         event Action<IPooledObject> isDisabled;
-        bool isInactiveInObjectPool { get; set; }
+        bool isUsedByObjectPool { get; set; }
     }
 }

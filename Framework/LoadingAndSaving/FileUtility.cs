@@ -24,7 +24,7 @@ namespace CraftingLegends.Framework
 			}
 		}
 
-#if !UNITY_WEBPLAYER && !UNITY_WINRT
+#if !UNITY_WEBPLAYER && !UNITY_WINRT && !UNITY_WEBGL
 
 
 		public static bool FileExists(string fileName)
@@ -46,6 +46,30 @@ namespace CraftingLegends.Framework
 		{
 			File.WriteAllText(fileName, content);
         }
+
+#endif
+
+#if UNITY_WEBGL
+
+		public static bool FileExists(string fileName)
+		{
+			return false;  // always return false; will not be called
+		}
+
+		public static void DeleteFile(string fileName)
+		{
+			// do nothing; will not be called
+		}
+
+		public static string ReadTextFile(string fileName)
+		{
+			return ""; // do nothing; will not be called
+		}
+
+		public static void WriteTextFile(string fileName, string content)
+		{
+			// do nothing; will not be called
+		}
 
 #endif
 

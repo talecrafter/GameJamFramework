@@ -40,7 +40,8 @@ namespace CraftingLegends.Framework
         //  public
         // --------------------------------------------------------------------------------
 
-        public bool isReached = true;
+        private bool _isReached = true;
+		public bool isReached { get { return _isReached; } }
 
         public bool hasTarget
         {
@@ -78,6 +79,16 @@ namespace CraftingLegends.Framework
         }
 
         private float _targetReachedDistanceSquared; // saving squared value because of performance reasons when comparing vector length
+		private float _targetReachedDistance;
+		public float targetReachedDistance
+		{
+			get { return _targetReachedDistance; }
+			private set
+			{
+				_targetReachedDistance = value;
+				_targetReachedDistanceSquared = value * value;
+			}
+		}
         private bool _determined = false;
 
 		private IPathField _pathField = null;
@@ -117,7 +128,7 @@ namespace CraftingLegends.Framework
             }
 
             // performance heavy calculations only every few frames
-            if (!isReached)
+            if (!_isReached)
                 PerformanceTicker();
 
             if (type != TargetType.None)
@@ -130,11 +141,11 @@ namespace CraftingLegends.Framework
                 }
                 else
                 {
-                    isReached = false;
+                    _isReached = false;
                 }
 
                 // check for next target on path
-                if (_hasPath && !isReached)
+                if (_hasPath && !_isReached)
                 {
                     if (Utilities2D.Vector2SqrDistance(_protagonistTransform.position, GetCurrentTargetLocation()) <= PATH_NODE_DISTANCE_SQUARED)
                     {
@@ -185,8 +196,8 @@ namespace CraftingLegends.Framework
 
             type = TargetType.Position;
             _targetPosition = targetPos;
-            _targetReachedDistanceSquared = targetDistance * targetDistance;
-            isReached = false;
+            targetReachedDistance = targetDistance;
+            _isReached = false;
             _determined = newDetermination;
 
             _calculatePathAtNextPossibility = true;
@@ -204,8 +215,8 @@ namespace CraftingLegends.Framework
 
             type = TargetType.Transform;
             _targetTransform = targetTransform;
-            _targetReachedDistanceSquared = targetDistance * targetDistance;
-            isReached = false;
+            targetReachedDistance = targetDistance;
+            _isReached = false;
             _determined = newDetermination;
 
             _calculatePathAtNextPossibility = true;
@@ -228,8 +239,8 @@ namespace CraftingLegends.Framework
             type = TargetType.Actor;
             _otherActor = otherActor;
             _targetTransform = otherActor.transform;
-            _targetReachedDistanceSquared = targetDistance * targetDistance;
-            isReached = false;
+            targetReachedDistance = targetDistance;
+            _isReached = false;
             _determined = newDetermination;
 
             _otherActor.stateChanged += Actor_StateChanged;
@@ -252,7 +263,7 @@ namespace CraftingLegends.Framework
             _hasPath = false;
             _calculatePathAtNextPossibility = false;
 
-            isReached = true;
+            _isReached = true;
 
             _determined = false;
         }
@@ -285,7 +296,7 @@ namespace CraftingLegends.Framework
 
 		private void ReachTarget()
 		{
-			isReached = true;
+			_isReached = true;
 
 			// target reached
 			if (type == TargetType.Position || type == TargetType.Transform)

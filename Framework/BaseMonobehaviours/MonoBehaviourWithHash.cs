@@ -21,19 +21,19 @@ namespace CraftingLegends.Framework
         {
             get
             {
-                return BaseGameController.Instance.gameStateData.wasUsed.Contains(hash);
+                return MainBase.Instance.gameStateData.wasUsed.Contains(hash);
             }
         }
 
         public void EnterHash()
         {
-            BaseGameController.Instance.gameStateData.wasUsed.Add(hash);
+            MainBase.Instance.gameStateData.wasUsed.Add(hash);
         }
 
         public void RemoveHash()
         {
             if (hashWasEntered)
-                BaseGameController.Instance.gameStateData.wasUsed.Remove(hash);
+                MainBase.Instance.gameStateData.wasUsed.Remove(hash);
         }
     }
 }

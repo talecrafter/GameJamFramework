@@ -3,9 +3,8 @@ namespace CraftingLegends.Framework
 {
 	public interface IState
 	{
-		void Enter();
-		void OnGUI();
+		void OnEnter();
 		void Update();
-		void Exit();
+		void OnExit();
 	}
 }

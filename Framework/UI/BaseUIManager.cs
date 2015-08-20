@@ -58,10 +58,10 @@ namespace CraftingLegends.Framework
 				child.gameObject.SetActive(false);
 			}
 
-			if (BaseGameController.Instance != null)
+			if (MainBase.Instance != null)
 			{
-				SetGameState(BaseGameController.Instance.state);
-				BaseGameController.Instance.gameStateChanged += GameStateChanged;
+				SetGameState(MainBase.Instance.state);
+				MainBase.Instance.gameStateChanged += GameStateChanged;
 			}
 		}
 
@@ -195,17 +195,17 @@ namespace CraftingLegends.Framework
 
 		public virtual void Pause()
 		{
-			BaseGameController.Instance.Pause();
+			MainBase.Instance.Pause();
 		}
 
 		public virtual void Resume()
 		{
-			BaseGameController.Instance.Resume();
+			MainBase.Instance.Resume();
 		}
 
 		public void Quit()
 		{
-			BaseGameController.Instance.Quit();
+			MainBase.Instance.Quit();
 		}
 
 		public void ShowImage(Sprite image)

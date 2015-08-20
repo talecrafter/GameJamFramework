@@ -2,16 +2,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using CraftingLegends.Core;
+using System;
 
 namespace CraftingLegends.Framework
 {
-	public class Actor : MonoBehaviour, IPooledObject, IActor
+	public class Actor : MonoBehaviour, IPooledObject, IActor, IHasHealth
 	{
 		#region declarations and events
 
 		public const float MINIMUM_MOVEMENT_FOR_ANIMATIONS = 0.01f;
 		public const float TARGET_DISTANCE = 0.7f;
-		public const float TIME_UNTIL_DESTRUCTION = 20.0f;
+		public const float TIME_UNTIL_DESTRUCTION = 10.0f;
 
 		// ================================================================================
 		//  declarations
@@ -77,16 +78,32 @@ namespace CraftingLegends.Framework
 		//  stats
 		// --------------------------------------------------------------------------------
 
-		public float maxHealth = 10.0f;
-		public float health = 10.0f;
+		[SerializeField]
+		private float _maxHealth = 10.0f;
+
+		private Energy _health;
+		public Energy health
+		{
+			get
+			{
+				if (_health == null)
+					health = new Energy(_maxHealth);
+
+				return _health;
+			}
+			set
+			{
+				_health = value;
+			}
+		}
+
 		public bool needsHealing
 		{
 			get
 			{
-				return isAlive && health < maxHealth;
+				return isAlive && !health.isFull;
 			}
 		}
-		private float _startHealth;
 
 		public float movementSpeed = 6.0f;
 
@@ -133,11 +150,19 @@ namespace CraftingLegends.Framework
 			}
 		}
 
+		public bool isReady
+		{
+			get
+			{
+				return (state == ActorState.Idle || state == ActorState.Moving);
+			}
+		}
+
 		#endregion
 
 		#region actions
 
-		public IActorAction action;
+		public IActorTimedAction action;
 
 		#endregion
 
@@ -189,18 +214,11 @@ namespace CraftingLegends.Framework
 			_animationController = _transform.GetInterface<IAnimationController>();
 			target = new Target(this, _transform);
 
+			health = new Energy(_maxHealth);
+
 			// set callback functions
 			GetEstimatedFuturePosition = EstimateFuturePosition;
 			deathExecutionHandler = DestroyAtDeath;
-
-			if (health > 0)
-			{
-				_startHealth = health;
-			}
-			else
-			{
-				_startHealth = maxHealth;
-			}
 
 			Reset();
 		}
@@ -208,8 +226,8 @@ namespace CraftingLegends.Framework
 		void FixedUpdate()
 		{
 			// do nothing when game is not running
-			if (BaseGameController.Instance == null ||
-				(BaseGameController.Instance.state != GameState.Running && BaseGameController.Instance.state != GameState.Sequence))
+			if (MainBase.Instance == null ||
+				(MainBase.Instance.state != GameState.Running && MainBase.Instance.state != GameState.Sequence))
 				return;
 
 			// slow movement
@@ -311,19 +329,19 @@ namespace CraftingLegends.Framework
 
 		public void Kill()
 		{
-			ApplyDamage(health);
+			ApplyDamage(health.current);
 		}
 
 		public void SetToDead()
 		{
-			health = 0;
+			health.EmptySilently();
 
 			state = ActorState.Dead;
 		}
 
 		public void Reset()
 		{
-			health = _startHealth;
+			health.Reset();
 			if (target != null)
 				target.DisableTarget();
 
@@ -344,11 +362,10 @@ namespace CraftingLegends.Framework
 			if (!isAlive)
 				return;
 
-			health -= damage;
+			health.Lose(damage);
 
-			if (health <= 0)
+			if (health.isEmpty)
 			{
-				health = 0;
 				Die();
 			}
 			else
@@ -366,15 +383,10 @@ namespace CraftingLegends.Framework
 			if (!isAlive)
 				return;
 
-			if (health >= maxHealth)
+			if (health.isFull)
 				return;
 
-			health += amount;
-
-			if (health > maxHealth)
-			{
-				health = maxHealth;
-			}
+			health.Add(amount);
 
 			//ShowDamageDisplay(0.3f, new Color(0.58f, 0.91f, 0.82f)); // turquoise color
 		}
@@ -384,12 +396,12 @@ namespace CraftingLegends.Framework
 		#region set targets
 
 		// transform as new target, e.g. walking to a building, flag
-		public void SetTarget(Transform newTarget, bool determined = false)
+		public void SetTarget(Transform newTarget, float distance = TARGET_DISTANCE, bool determined = false)
 		{
 			if (!isAlive)
 				return;
 
-			target.SetTarget(newTarget, TARGET_DISTANCE, determined);
+			target.SetTarget(newTarget, distance, determined);
 
 			if (state == ActorState.Idle)
 				state = ActorState.Moving;
@@ -424,7 +436,13 @@ namespace CraftingLegends.Framework
 
 		public void SetMovement(Vector2 moveDirection)
 		{
+			if (!isAlive)
+				return;
+
 			target.DisableTarget();
+
+			if (moveDirection == Vector2.zero)
+				return;
 
 			if (moveDirection.sqrMagnitude > 1.0f)
 				moveDirection = moveDirection.normalized;
@@ -449,6 +467,36 @@ namespace CraftingLegends.Framework
 				if (state == ActorState.Moving)
 					state = ActorState.Idle;
 			}
+		}
+
+		public void TakeAction(Actor targetActor)
+		{
+			if (!isAlive)
+				return;
+
+			_actionTimer = new Timer(action.cooldown);
+			isMoving = false;
+
+			// update look direction
+			SetLookDirectionToTarget(targetActor.position2D);
+
+			state = ActorState.TakingAction;
+
+			action.Execute();
+		}
+
+		public void TakeAction(IEnumeratedAction enumeratedAction)
+		{
+			isMoving = false;
+			state = ActorState.TakingAction;
+
+			StartCoroutine(StartAction(enumeratedAction));
+		}
+
+		private IEnumerator StartAction(IEnumeratedAction enumeratedAction)
+		{
+			yield return StartCoroutine(enumeratedAction.Execute());
+			state = ActorState.Idle;
 		}
 
 		#endregion
@@ -559,7 +607,7 @@ namespace CraftingLegends.Framework
 			//Vector3 movement = moveDirection * speed * Time.deltaTime;
 			//_transform.Translate(movement);
 
-			Debug.DrawLine(_transform.position, _transform.position + new Vector3(moveDirection.x, moveDirection.y, 0), Color.red);
+			//Debug.DrawLine(_transform.position, _transform.position + new Vector3(moveDirection.x, moveDirection.y, 0), Color.red);
 
 			// mark controller as moving or not (for animations)
 			if (movement.magnitude > MINIMUM_MOVEMENT_FOR_ANIMATIONS)
@@ -573,22 +621,6 @@ namespace CraftingLegends.Framework
 			}
 
 			_lastMovement = movement; // save movement value to calculate future position for targeting this Actor
-		}
-
-		private void TakeAction(Actor targetActor)
-		{
-			if (!isAlive)
-				return;
-
-			_actionTimer = new Timer(action.cooldown);
-			isMoving = false;
-
-			// update look direction
-			SetLookDirectionToTarget(targetActor.position2D);
-
-			state = ActorState.TakingAction;
-
-			action.Execute();
 		}
 
 		private Vector2 EstimateFuturePosition(float time)

@@ -90,7 +90,7 @@ namespace CraftingLegends.Framework
 		//  public methods
 		// --------------------------------------------------------------------------------
 
-		public Actor GetActorWithLowestHitPoints()
+		public Actor GetMostWoundedActor()
 		{
 			UpdateList();
 
@@ -100,14 +100,14 @@ namespace CraftingLegends.Framework
 			}
 
 			Actor targetActor = actors[0];
-			float healthAmount = targetActor.maxHealth - targetActor.health;
+			float woundAmount = targetActor.health.woundedAmount;
 
 			for (int i = 1; i < actors.Count; i++)
 			{
-				float newHealthAmount = actors[i].maxHealth - actors[i].health;
-				if (newHealthAmount > healthAmount)
+				float newHealthAmount = actors[i].health.woundedAmount;
+				if (newHealthAmount > woundAmount)
 				{
-					healthAmount = newHealthAmount;
+					woundAmount = newHealthAmount;
 					targetActor = actors[i];
 				}
 			}

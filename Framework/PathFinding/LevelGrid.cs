@@ -104,10 +104,10 @@ namespace CraftingLegends.Framework
         private void CreateGrid(float fieldSize)
         {
             // calculate grid bounds
-            _startX = BaseGameController.Instance.levelBounds.x;
-            _startY = BaseGameController.Instance.levelBounds.y;
-            _columnCount = (int)Mathf.Ceil(BaseGameController.Instance.levelBounds.width / fieldSize);
-            _rowCount = (int)Mathf.Ceil(BaseGameController.Instance.levelBounds.height / fieldSize);
+            _startX = MainBase.Instance.levelBounds.x;
+            _startY = MainBase.Instance.levelBounds.y;
+            _columnCount = (int)Mathf.Ceil(MainBase.Instance.levelBounds.width / fieldSize);
+            _rowCount = (int)Mathf.Ceil(MainBase.Instance.levelBounds.height / fieldSize);
 
             _pathController.AllowDiagonalMovement(true);
             _pathController.SetDimensions(rowCount: _rowCount, columnCount: _columnCount);

@@ -6,7 +6,7 @@ using System;
 
 namespace CraftingLegends.Framework
 {
-    public class BaseGameController : MonoBehaviour
+    public class MainBase : MonoBehaviour
     {
         // ================================================================================
         //  state
@@ -50,13 +50,14 @@ namespace CraftingLegends.Framework
             }
 		}
 		public static bool isRunning { get { return Instance.state == GameState.Running; } }
+		public static bool isRunningOrInSequence { get { return Instance.state == GameState.Running || Instance.state == GameState.Sequence; } }
 		public static bool isPaused { get { return Instance.state == GameState.Paused; } }
 
         // ================================================================================
         //  singleton
         // --------------------------------------------------------------------------------
 
-        public static BaseGameController Instance;
+        public static MainBase Instance;
 
 		// ================================================================================
 		//  components
@@ -64,28 +65,51 @@ namespace CraftingLegends.Framework
 
 		[HideInInspector]
 		public BaseNavigationInput baseNavigationInput;
+		public static BaseNavigationInput BaseNavigationInput { get { return Instance.baseNavigationInput; } }
 
 		[HideInInspector]
         public ApplicationInfo applicationInfo;
+		public static ApplicationInfo Info { get { return Instance.applicationInfo; } }
+
         [HideInInspector]
         public BaseAudioManager baseAudioManager;
+		public static BaseAudioManager BaseAudioManager { get { return Instance.baseAudioManager; } }
+
         [HideInInspector]
         public Rect levelBounds;
+		public static Rect LevelBounds { get { return Instance.levelBounds; } }
+
         [HideInInspector]
         public LevelGrid levelGrid = null;
+		public static LevelGrid LevelGrid { get { return Instance.levelGrid; } }
+
 		[HideInInspector]
-		public ScreenShake screenShake;
+		public CameraShake screenShake;
+		public static CameraShake ScreenShake { get { return Instance.screenShake; } }
+
+		[HideInInspector]
+		public Messenger messenger;
+		public static Messenger Messenger { get { return Instance.messenger; } }
 
 		public IInputController inputController = null;
+		public static IInputController InputController { get { return Instance.inputController; } }
+
 		public IGamepadInput gamepadInput = null;
+		public static IGamepadInput GamepadInput { get { return Instance.gamepadInput; } }
 
         public GameStateData gameStateData = new GameStateData();
+		public static GameStateData GameStateData { get { return Instance.gameStateData; } }
 
-        // ================================================================================
-        //  debug
-        // --------------------------------------------------------------------------------
+		public PrefabPool prefabPool = new PrefabPool();
+		public static PrefabPool PrefabPool { get { return Instance.prefabPool; } }
 
-        public GameObject debugInterfacePrefab;
+		public Timers timers = new Timers();
+		public static Timers Timers { get { return Instance.timers; } }
+
+		// ================================================================================
+		//  debug
+		// --------------------------------------------------------------------------------
+
         public bool debugIsTouch;
         public bool debugDisableAudio;
 
@@ -135,10 +159,18 @@ namespace CraftingLegends.Framework
                     }
                 }
             }
+			else
+			{
+				timers.Update();
+			}
 		}
 
         protected virtual void OnLevelWasLoaded(int level)
         {
+			// clear object pool
+			prefabPool.Reset();
+			timers.Clear();
+
             LoadLevelData();
 
             if (_loadingTimer == null)
@@ -185,7 +217,6 @@ namespace CraftingLegends.Framework
 
         public virtual void Pause()
         {
-            Time.timeScale = 0;
             state = GameState.Paused;
         }
 
@@ -234,6 +265,7 @@ namespace CraftingLegends.Framework
 
             baseAudioManager = GetComponent<BaseAudioManager>();
 			baseNavigationInput = GetComponent<BaseNavigationInput>();
+			messenger = GetComponent<Messenger>();
 			applicationInfo = new ApplicationInfo();
 
 			gamepadInput = transform.GetInterface<IGamepadInput>();
@@ -248,7 +280,8 @@ namespace CraftingLegends.Framework
 		// use this for finding references in the scene
         protected virtual void LoadLevelData()
         {
-			screenShake = FindObjectOfType<ScreenShake>();
+			screenShake = FindObjectOfType<CameraShake>();
+			levelGrid = FindObjectOfType<LevelGrid>();
         }
 
 		// use this for initialising gameplay

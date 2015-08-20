@@ -6,7 +6,7 @@ namespace CraftingLegends.Core
 {
 	public class PooledObject : MonoBehaviour, IPooledObject
 	{
-		private bool _isActive = false;
+		private bool _isActive = true;
 		public bool isActive { get { return _isActive; } }
 
 		public virtual void ToggleOn()
@@ -24,16 +24,30 @@ namespace CraftingLegends.Core
 
 		public event System.Action<IPooledObject> isDisabled;
 
+		private bool _isUseByObjectPool = false;
 		public bool isUsedByObjectPool
 		{
-			get;
-			set;
+			get
+            {
+				return _isUseByObjectPool;
+			}
+			set
+			{
+				_isUseByObjectPool = value;
+			}
 		}
 
-		public void NotifyDestroy()
+		public void NotifyDisabled()
 		{
-			if (isDisabled != null)
-				isDisabled(this);
+			if (isUsedByObjectPool)
+			{
+				if (isDisabled != null)
+					isDisabled(this);
+			}
+			else
+			{
+				Destroy(gameObject);
+			}
 		}
 	}
 }

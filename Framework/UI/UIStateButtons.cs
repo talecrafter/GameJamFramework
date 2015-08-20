@@ -59,12 +59,12 @@ namespace CraftingLegends.Framework
 
 		public virtual void Enter()
 		{
-			if (BaseGameController.Instance != null && BaseGameController.Instance.baseNavigationInput != null)
-				BaseGameController.Instance.baseNavigationInput.Add(this);
+			if (MainBase.Instance != null && MainBase.Instance.baseNavigationInput != null)
+				MainBase.Instance.baseNavigationInput.Add(this);
 
-			if (BaseGameController.Instance != null && BaseGameController.Instance.inputController != null
-				&& (BaseGameController.Instance.inputController.inputScheme == InputScheme.Keyboard
-					|| BaseGameController.Instance.inputController.inputScheme == InputScheme.Gamepad)
+			if (MainBase.Instance != null && MainBase.Instance.inputController != null
+				&& (MainBase.Instance.inputController.inputScheme == InputScheme.Keyboard
+					|| MainBase.Instance.inputController.inputScheme == InputScheme.Gamepad)
 				&& _buttons.Count > 0)
 			{
 				_selected = 0;
@@ -79,8 +79,8 @@ namespace CraftingLegends.Framework
 
 		public virtual void Exit()
 		{
-			if (BaseGameController.Instance != null && BaseGameController.Instance.baseNavigationInput != null)
-				BaseGameController.Instance.baseNavigationInput.Remove(this);
+			if (MainBase.Instance != null && MainBase.Instance.baseNavigationInput != null)
+				MainBase.Instance.baseNavigationInput.Remove(this);
 
 			// HACK: look into EventSystem.firstSelected in the future
 			EventSystem.current.SetSelectedGameObject(null, null);

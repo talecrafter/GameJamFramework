@@ -72,6 +72,13 @@ namespace CraftingLegends.Framework
 			_source.PlayOneShot(clip, _source.volume * volume);
 		}
 
+		public void PlayWithVariation(AudioClip clip, float volume = 1.0f)
+		{
+			_source.pitch = Random.Range(.9f, 1.1f);
+			_source.volume = Random.Range(.9f, 1f);
+			_source.PlayOneShot(clip, _source.volume * volume);
+		}
+
 		// ================================================================================
 		//  private
 		// --------------------------------------------------------------------------------

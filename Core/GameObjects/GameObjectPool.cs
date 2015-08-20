@@ -86,6 +86,12 @@ namespace CraftingLegends.Core
 
         private IPooledObject CreateNewObject(Vector3? pos = null)
         {
+			if (_prefab == null)
+			{
+				Debug.LogError("ObjectPool has no prefab");
+				return null;
+			}
+
 			MonoBehaviour newObject = GameObjectFactory.Instantiate(_prefab, position: pos);
 
 			if (_parent != null)

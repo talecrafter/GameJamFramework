@@ -39,7 +39,7 @@ namespace CraftingLegends.Framework
         {
             _transform = transform;
 
-            BaseGameController.Instance.levelBounds = levelBounds;
+            MainBase.Instance.levelBounds = levelBounds;
         }
 
         void OnDrawGizmos()

@@ -24,6 +24,7 @@ namespace CraftingLegends.Framework
 		// --------------------------------------------------------------------------------
 
 		public GameObject displayObject;
+		public List<SpriteRenderer> additionalSprites;
 
 		public List<Renderer> excludeRendererFromEffects = new List<Renderer>();
 
@@ -53,7 +54,8 @@ namespace CraftingLegends.Framework
 			if (_actor != null)
 				_actor.stateChanged += ActorStateChangedHandler;
 
-			_animator = displayObject.GetComponentInChildren<Animator>();
+			if (displayObject != null)
+				_animator = displayObject.GetComponentInChildren<Animator>();
 
 			if (displayObject != null)
 			{
@@ -83,7 +85,7 @@ namespace CraftingLegends.Framework
 			//}
 
 			// show fadeout when game is running or has ended
-			if (BaseGameController.Instance.state == GameState.Running || BaseGameController.Instance.state == GameState.Ended)
+			if (MainBase.Instance.state == GameState.Running || MainBase.Instance.state == GameState.Ended)
 			{
 				if (_fadeInTimer != null)
 				{
@@ -114,12 +116,29 @@ namespace CraftingLegends.Framework
 		//  public methods
 		// --------------------------------------------------------------------------------
 
+		public void SetLookDirection(float direction)
+		{
+			if (direction > 0)
+			{
+				_animator.SetFloat("lookY", 1f);
+			}
+			else if (direction < 0)
+			{
+				_animator.SetFloat("lookY", -1f);
+			}
+		}
+
 		// sets color for all sprite children
 		public void SetMaterialColor(Color color)
 		{
 			for (int i = 0; i < _materials.Count; i++)
 			{
 				_materials[i].color = color;
+			}
+
+			for (int i = 0; i < additionalSprites.Count; i++)
+			{
+				additionalSprites[i].color = color;
 			}
 		}
 

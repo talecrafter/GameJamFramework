@@ -35,7 +35,7 @@ namespace CraftingLegends.Framework
 		public void Push(T state)
 		{
 			_stack.Push(state);
-			state.Enter();
+			state.OnEnter();
 		}
 
 		public void SwitchTo(T state)
@@ -49,7 +49,7 @@ namespace CraftingLegends.Framework
 			if (_stack.Count > 0)
 			{
 				T state = _stack.Pop();
-				state.Exit();
+				state.OnExit();
 				return state;
 			}
 			else
@@ -83,14 +83,6 @@ namespace CraftingLegends.Framework
 			if (_stack.Count > 0)
 			{
 				_stack.Peek().Update();
-			}
-		}
-
-		public void OnGUI()
-		{
-			if (_stack.Count > 0)
-			{
-				_stack.Peek().OnGUI();
 			}
 		}
 	}

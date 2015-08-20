@@ -63,7 +63,7 @@ namespace CraftingLegends.Framework
             }
 
             // Debug: override settings
-            if (Application.isEditor && BaseGameController.Instance.debugIsTouch)
+            if (Application.isEditor && MainBase.Instance.debugIsTouch)
             {
                 hasTouch = true;
                 hasTwoMouseButtons = false;
@@ -71,7 +71,7 @@ namespace CraftingLegends.Framework
             }
 
             // Debug: override settings
-            if (Application.isEditor && BaseGameController.Instance.debugDisableAudio)
+            if (Application.isEditor && MainBase.Instance.debugDisableAudio)
             {
                 AudioListener.volume = 0;
             }

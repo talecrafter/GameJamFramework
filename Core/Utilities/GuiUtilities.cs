@@ -25,13 +25,10 @@ namespace CraftingLegends.Core
 			}
 		}
 
-		/// <summary>
-		/// draw Sprite during OnGUI method using GUI.DrawTextureWithTexCoords
-		/// aspect ratio is preserved
-		/// </summary>
-		/// <param name="sprite"></param>
-		/// <param name="rect"></param>
-		/// <param name="verticalPortion">from 0 to 1.0f</param>
+		// draw Sprite during OnGUI method using GUI.DrawTextureWithTexCoords
+		// aspect ratio is preserved
+		// .......
+		// this might not be working correctly
 		public static void DrawClippedSprite(Sprite sprite, Rect rect, float verticalPortion)
 		{
 			if (sprite != null)

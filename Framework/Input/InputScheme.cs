@@ -1,12 +1,13 @@
 ﻿
 namespace CraftingLegends.Framework
 {
-    public enum InputScheme
-    {
+	public enum InputScheme : int
+	{
 		None,
-        Mouse,
-        Touch,
-        Keyboard,
-		Gamepad
-    }
+		Mouse,
+		Keyboard,
+		MouseAndKeyboard,
+		Gamepad,
+		Touch
+	}
 }

@@ -68,6 +68,17 @@ namespace CraftingLegends.Core
 			}
 		}
 
+		public static List<string> ConvertToStrings<T>(List<T> originalList)
+		{
+			List<string> newList = new List<string>();
+			for (int i = 0; i < originalList.Count; i++)
+			{
+				newList.Add(originalList[i].ToString());
+			}
+
+			return newList;
+		}
+
 		#region LayerMasks
 
 		// calculates a layermask by combining all named layers

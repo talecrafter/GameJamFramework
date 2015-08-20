@@ -33,6 +33,10 @@ namespace CraftingLegends.Framework
 		{
 			Transform transform = this.transform;
 			Camera camera = GetComponentInChildren<Camera>();
+
+			if (camera == null)
+				return;
+
 			Gizmos.color = lineColor;
 
 			float vDistance = camera.orthographicSize;	// orthographic size is half of camera height

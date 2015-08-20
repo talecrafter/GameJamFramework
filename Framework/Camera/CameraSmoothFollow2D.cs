@@ -64,17 +64,25 @@ namespace CraftingLegends.Framework
 		private bool _canMoveRight = false;
 		public bool canMoveRight { get { return _canMoveRight; } }
 
-		// ================================================================================
-		//  private
-		// --------------------------------------------------------------------------------
-
 		// level boundaries
 		private bool _checkForBounds = false;
 		private Rect _bounds;
 		private Rect _innerBounds;
 
 		protected Camera _camera;
+		public Camera Camera {
+			get {
+				if (_camera == null)
+					Init();
+
+				return _camera;
+			}
+		}
+
 		protected Transform _transform;
+
+		protected CameraShake _cameraShake;
+		public CameraShake shaker {  get { return _cameraShake; } }
 
 		// ================================================================================
 		//  unity methods
@@ -177,9 +185,10 @@ namespace CraftingLegends.Framework
 		//  private methods
 		// --------------------------------------------------------------------------------
 
-		private void Init()
+		public void Init()
 		{
-			_camera = Camera.main;
+			_camera = GetComponentInChildren<Camera>();
+			_cameraShake = GetComponentInChildren<CameraShake>();
 			_transform = transform;
 
 			LevelBoundaries levelBoundaries = FindObjectOfType<LevelBoundaries>();
@@ -189,11 +198,13 @@ namespace CraftingLegends.Framework
 
 		protected void FollowTarget()
 		{
-			Rect cameraRect = Utilities2D.CameraBounds2D();
+			Rect cameraRect = Utilities2D.CameraBounds2D(_camera);
 			float horizontalScale = 1.0f;
 			float verticalScale = 1.0f;
 
 			Vector3 targetPos = GetTargetPosition();
+			if (float.IsNaN(targetPos.x) || float.IsNaN(targetPos.y))
+				return;
 
 			if (_checkForBounds)
 			{
@@ -274,7 +285,7 @@ namespace CraftingLegends.Framework
 			if (!_checkForBounds)
 				return;
 
-			Rect cameraRect = Utilities2D.CameraBounds2D();
+			Rect cameraRect = Utilities2D.CameraBounds2D(_camera);
 
 			_canMoveRight = true;
 			_canMoveLeft = true;
@@ -286,21 +297,21 @@ namespace CraftingLegends.Framework
 			if (_camera.orthographicSize < minimumOrthoGraphicSize)
 			{
 				_camera.orthographicSize = minimumOrthoGraphicSize;
-				cameraRect = Utilities2D.CameraBounds2D();
+				cameraRect = Utilities2D.CameraBounds2D(_camera);
 			}
 
 			if (cameraRect.width > _bounds.width)
 			{
 				float resize = _bounds.width / cameraRect.width;
 				_camera.orthographicSize *= resize;
-				cameraRect = Utilities2D.CameraBounds2D();
+				cameraRect = Utilities2D.CameraBounds2D(_camera);
 			}
 
 			if (cameraRect.height > _bounds.height)
 			{
 				float resize = _bounds.height / cameraRect.height;
 				_camera.orthographicSize *= resize;
-				cameraRect = Utilities2D.CameraBounds2D();
+				cameraRect = Utilities2D.CameraBounds2D(_camera);
 			}
 
 			ApplyHardBounds(cameraRect);
@@ -313,28 +324,28 @@ namespace CraftingLegends.Framework
 			if (cameraRect.xMin <= _bounds.xMin - errorMargin)
 			{
 				_transform.position += new Vector3(_bounds.xMin - cameraRect.xMin, 0, 0);
-				cameraRect = Utilities2D.CameraBounds2D();
+				cameraRect = Utilities2D.CameraBounds2D(_camera);
 				_canMoveLeft = false;
 			}
 
 			if (cameraRect.yMin <= _bounds.yMin - errorMargin)
 			{
 				_transform.position += new Vector3(0, _bounds.yMin - cameraRect.yMin, 0);
-				cameraRect = Utilities2D.CameraBounds2D();
+				cameraRect = Utilities2D.CameraBounds2D(_camera);
 				_canMoveDown = false;
 			}
 
 			if (cameraRect.xMax >= _bounds.xMax + errorMargin)
 			{
 				_transform.position -= new Vector3(cameraRect.xMax - _bounds.xMax, 0, 0);
-				cameraRect = Utilities2D.CameraBounds2D();
+				cameraRect = Utilities2D.CameraBounds2D(_camera);
 				_canMoveRight = false;
 			}
 
 			if (cameraRect.yMax >= _bounds.yMax + errorMargin)
 			{
 				_transform.position -= new Vector3(0, cameraRect.yMax - _bounds.yMax, 0);
-				cameraRect = Utilities2D.CameraBounds2D();
+				cameraRect = Utilities2D.CameraBounds2D(_camera);
 				_canMoveUp = false;
 			}
 

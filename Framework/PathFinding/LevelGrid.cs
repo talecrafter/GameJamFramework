@@ -5,20 +5,38 @@ using CraftingLegends.Core;
 
 namespace CraftingLegends.Framework
 {
-    public class LevelGrid : MonoBehaviour, IPathField
+	public class LevelGrid : MonoBehaviour, IPathField
 	{
-        // ================================================================================
-        //  public
-        // --------------------------------------------------------------------------------
+		// ================================================================================
+		//  public
+		// --------------------------------------------------------------------------------
 
-        public bool drawDebug = false;
+		public bool drawDebug = false;
 
-        // ================================================================================
-        //  private
-        // --------------------------------------------------------------------------------
+		// ================================================================================
+		//  private
+		// --------------------------------------------------------------------------------
 
-        // cell size of the grid
-        public float gridSize = 0.9f;
+		// cell size of the grid
+		[SerializeField]
+		private float _fieldSizeX = 0.35f;
+		public float fieldSizeX
+		{
+			get
+			{
+				return _fieldSizeX;
+			}
+		}
+		private float _fieldSizeY = 0.35f;
+		public float fieldSizeY
+		{
+			get
+			{
+				return _fieldSizeY;
+			}
+		}
+		protected bool _usesDifferentHeight = false;
+
 		public int maxCheckNodesWithoutProgress = 0;
 
 		// bounds
@@ -28,6 +46,26 @@ namespace CraftingLegends.Framework
 		protected int _rowCount;
 
 		protected GridPathController _pathController = new GridPathController();
+
+		private bool _wasCreated = false;
+
+		// layers
+		protected string[] _collisionLayers = new string[] {"Building", "AreaEffects", "Walls"};
+        protected string[] collisionLayers
+		{
+			get
+			{
+				return _collisionLayers;
+			}
+		}
+		protected string[] _collisionLayersIncludingDynamic = new string[] { "Building", "AreaEffects", "Obstacles", "Walls" };
+		protected string[] collisionLayersIncludingDynamic
+		{
+			get
+			{
+				return _collisionLayersIncludingDynamic;
+			}
+		}
 
 		// debug
 		protected Vector3 _debugDrawSize;
@@ -39,21 +77,34 @@ namespace CraftingLegends.Framework
         //  unity methods
         // --------------------------------------------------------------------------------
 
+		protected virtual void Awake()
+		{
+			_debugDrawSize = new Vector3(_fieldSizeX, _fieldSizeY, _fieldSizeX);
+		}
+
         protected virtual void Start()
         {
-            _debugDrawSize = new Vector3(gridSize, gridSize, gridSize);
+			if (!_wasCreated)
+			{
+				CheckFieldSizeY();
+				CreateGrid(MainBase.Instance.levelBounds, _fieldSizeX, _fieldSizeY);
+			}
 
-            CreateGrid(gridSize);
-
-            if (Application.loadedLevelName == "pathfinding_test")
-            {
-                Test();
-            }
-        }
+			if (Application.loadedLevelName == "pathfinding_test")
+			{
+				Test();
+			}
+		}
 
         // ================================================================================
         //  public methods
         // --------------------------------------------------------------------------------
+
+		public void Init(Rect rect)
+		{
+			CheckFieldSizeY();
+			CreateGrid(rect, _fieldSizeX, _fieldSizeY);
+		}
 
         public virtual void GetPath(Vector2 startPos, Vector2 endPos, Vector2Path vectorPath)
         {
@@ -70,6 +121,7 @@ namespace CraftingLegends.Framework
                 for (int i = 0; i < _pathController.gridPath.count; i++)
                 {
                     Vector2 p = GetLevelPositionFromGridPosition(_pathController.gridPath[i]);
+
                     vectorPath.AddPosition(p.x, p.y);
                 }
             }
@@ -87,7 +139,7 @@ namespace CraftingLegends.Framework
 
             //Debug.Log("from " + fromColumn + "/" + fromRow + " to " + toColumn + "/" + toRow );
 
-            int layerMask = Utilities.LayerMaskIncludingDefault("Building", "AreaEffects", "Obstacles");
+            int layerMask = Utilities.LayerMaskIncludingDefault(collisionLayersIncludingDynamic);
 
             CheckColliders(_pathController.grid, layerMask, fromColumn: fromColumn, fromRow: fromRow, toColumn: toColumn, toRow: toRow);            
         }
@@ -101,24 +153,26 @@ namespace CraftingLegends.Framework
             return _pathController.grid[row * _columnCount + column].walkable;
         }
 
-        private void CreateGrid(float fieldSize)
+        private void CreateGrid(Rect boundaries, float fieldSizeX, float fieldSizeY)
         {
             // calculate grid bounds
-            _startX = MainBase.Instance.levelBounds.x;
-            _startY = MainBase.Instance.levelBounds.y;
-            _columnCount = (int)Mathf.Ceil(MainBase.Instance.levelBounds.width / fieldSize);
-            _rowCount = (int)Mathf.Ceil(MainBase.Instance.levelBounds.height / fieldSize);
+            _startX = boundaries.x;
+            _startY = boundaries.y;
+            _columnCount = (int)Mathf.Ceil(boundaries.width / fieldSizeX);
+            _rowCount = (int)Mathf.Ceil(boundaries.height / fieldSizeY);
 
             _pathController.AllowDiagonalMovement(true);
             _pathController.SetDimensions(rowCount: _rowCount, columnCount: _columnCount);
             
             // mark all possible collisions as true on the grid
-            CheckColliders(_pathController.grid, Utilities.LayerMaskIncludingDefault("Building", "AreaEffects"));
+            CheckColliders(_pathController.grid, Utilities.LayerMaskIncludingDefault(collisionLayers));
             // hardcode directions
             _pathController.CalculatePossibleDirections();
 
             // check again and include dynamic objects
-            CheckColliders(_pathController.grid, Utilities.LayerMaskIncludingDefault("Building", "AreaEffects", "Obstacles"));
+            CheckColliders(_pathController.grid, Utilities.LayerMaskIncludingDefault(collisionLayersIncludingDynamic));
+
+			_wasCreated = true;
         }
 
         private void CheckColliders(GridPathNode[] grid, int layerMask)
@@ -129,19 +183,19 @@ namespace CraftingLegends.Framework
         private void CheckColliders(GridPathNode[] grid, int layerMask, int fromColumn, int fromRow, int toColumn, int toRow)
         {
             // save raycastsHitTriggers setting
-            bool beforeSetting = Physics2D.raycastsHitTriggers;
-            Physics2D.raycastsHitTriggers = false;
+            bool beforeSetting = Physics2D.queriesHitTriggers;
+            Physics2D.queriesHitTriggers = false;
 
             for (int row = fromRow; row <= toRow; row++)
             {
                 for (int column = fromColumn; column <= toColumn; column++)
                 {
                     // calculate position
-                    float posX = _startX + column * gridSize + gridSize * 0.5f;
-                    float posY = _startY + row * gridSize + gridSize * 0.5f;
+                    float posX = _startX + column * _fieldSizeX + _fieldSizeX * 0.5f;
+                    float posY = _startY + row * _fieldSizeY + _fieldSizeY * 0.5f;
 
                     // check for colliders
-                    Collider2D coll = Physics2D.OverlapCircle(new Vector2(posX, posY), gridSize * 0.49f, layerMask);
+                    Collider2D coll = Physics2D.OverlapCircle(new Vector2(posX, posY), _fieldSizeX * 0.45f, layerMask);
                     if (coll == null)
                         grid[row * _columnCount + column].SetWalkable(true);
                     else
@@ -150,7 +204,7 @@ namespace CraftingLegends.Framework
             }
 
             // restore raycastsHitTriggers setting
-            Physics2D.raycastsHitTriggers = beforeSetting;
+            Physics2D.queriesHitTriggers = beforeSetting;
         }
 
 		#region test methods
@@ -189,7 +243,7 @@ namespace CraftingLegends.Framework
 
             if (_testPath != null)
             {
-                for (int i = 0; i < _testPath.count; i++)
+                for (int i = 0; i < _testPath.Count; i++)
                 {
                     Vector3 center = new Vector3(_testPath[i].x, _testPath[i].y, 0);
                     Gizmos.DrawCube(center, _debugDrawSize);
@@ -256,6 +310,12 @@ namespace CraftingLegends.Framework
 		//  helper methods
 		// --------------------------------------------------------------------------------
 
+		protected void CheckFieldSizeY()
+		{
+			if (!_usesDifferentHeight)
+				_fieldSizeY = fieldSizeX;
+		}
+
 		protected GridPosition GetGridPositionFromLevelPosition(Vector2 levelPos)
         {
             return new GridPosition(GetColumnFromX(levelPos.x), GetRowFromY(levelPos.y));
@@ -268,34 +328,36 @@ namespace CraftingLegends.Framework
 
 		protected int GetColumnFromX(float posX)
         {
-            return (int)((posX - _startX) / gridSize);
+            return (int)((posX - _startX) / _fieldSizeX);
         }
 
 		protected int GetRowFromY(float posY)
         {
-            return (int)((posY - _startY) / gridSize);
+            return (int)((posY - _startY) / _fieldSizeY);
         }
 
 		protected float GetPositionFromColumn(int row)
         {
-            return _startX + row * gridSize + gridSize * 0.5f;
+            return _startX + row * _fieldSizeX + _fieldSizeX * 0.5f;
         }
 
 		protected float GetPositionFromRow(int row)
         {
-            return _startY + row * gridSize + gridSize * 0.5f;
+            return _startY + row * _fieldSizeY + _fieldSizeY * 0.5f;
         }
 
-		protected void SetGridSize(float size)
+		protected void SetGridSize(float fieldSizeX, float fieldSizeY)
 		{
-			gridSize = size;
-			_debugDrawSize = new Vector3(gridSize, gridSize, gridSize);
+			_usesDifferentHeight = true;
+			_fieldSizeX = fieldSizeX;
+			_fieldSizeY = fieldSizeY;
+			_debugDrawSize = new Vector3(_fieldSizeX, _fieldSizeY, _fieldSizeX);
 		}
 
         private void DrawMarker(int row, int column)
         {
-            float posX = _startX + column * gridSize + gridSize * 0.5f;
-            float posY = _startY + row * gridSize + gridSize * 0.5f;
+            float posX = _startX + column * _fieldSizeX + _fieldSizeX * 0.5f;
+            float posY = _startY + row * _fieldSizeY + _fieldSizeY * 0.5f;
 
             Vector3 center = new Vector3(posX, posY, 0);
             Gizmos.DrawCube(center, _debugDrawSize);

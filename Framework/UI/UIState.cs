@@ -8,6 +8,9 @@ namespace CraftingLegends.Framework
 		void Enter();
 		void Exit();
 
+		void SetActive();
+		void SetInactive();
+
 		T gameState { get; }
 	}
 }

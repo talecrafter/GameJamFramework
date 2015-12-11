@@ -8,14 +8,14 @@ namespace CraftingLegends.Framework
 	{
 		public AudioSource source;
 
-		private Actor _actor;
+		private Actor2D _actor;
 
 		void Awake()
 		{
 			if (source == null)
 				source = GetComponent<AudioSource>();
 
-			_actor = GetComponent<Actor>();
+			_actor = GetComponent<Actor2D>();
 
 			source.loop = true;
 			source.Stop();

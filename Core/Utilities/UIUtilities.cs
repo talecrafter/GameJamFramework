@@ -21,6 +21,38 @@ namespace CraftingLegends.Core
 			rectTransform.anchoredPosition = new Vector2(-rectTransform.anchoredPosition.x - rectTransform.rect.width, rectTransform.anchoredPosition.y);
 		}
 
+		public static void MoveAlignmentFromRightToLeft(MonoBehaviour component)
+		{
+			RectTransform rectTransform = component.GetComponent<RectTransform>();
+			rectTransform.anchorMin = new Vector2(0f, 1f);
+			rectTransform.anchorMax = new Vector2(0f, 1f);
+			rectTransform.anchoredPosition = new Vector2(-rectTransform.anchoredPosition.x + rectTransform.rect.width, rectTransform.anchoredPosition.y);
+		}
+
+		public static void MoveAnchorFromLeftToRight(MonoBehaviour component)
+		{
+			RectTransform rectTransform = component.GetComponent<RectTransform>();
+			rectTransform.anchoredPosition = new Vector2(-rectTransform.anchoredPosition.x, rectTransform.anchoredPosition.y);
+		}
+
+		public static void MoveAnchorFromRightToLeft(MonoBehaviour component)
+		{
+			RectTransform rectTransform = component.GetComponent<RectTransform>();
+			rectTransform.anchoredPosition = new Vector2(-rectTransform.anchoredPosition.x, rectTransform.anchoredPosition.y);
+		}
+
+		public static void MoveAnchorFromLeftToRight(Transform transform)
+		{
+			RectTransform rectTransform = transform.GetComponent<RectTransform>();
+			rectTransform.anchoredPosition = new Vector2(-rectTransform.anchoredPosition.x, rectTransform.anchoredPosition.y);
+		}
+
+		public static void MoveAnchorFromRightToLeft(Transform transform)
+		{
+			RectTransform rectTransform = transform.GetComponent<RectTransform>();
+			rectTransform.anchoredPosition = new Vector2(-rectTransform.anchoredPosition.x, rectTransform.anchoredPosition.y);
+		}
+
 		/// <summary>
 		/// just sets the x scale to -x
 		/// </summary>

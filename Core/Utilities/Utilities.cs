@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.Text;
 
 namespace CraftingLegends.Core
 {
@@ -30,8 +31,17 @@ namespace CraftingLegends.Core
 
 		public static Vector2 mouseInScreenSpace
 		{
-			get {
+			get
+			{
 				return new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+			}
+		}
+
+		public static bool mouseIsAtScreenEdgeOrBeyond
+		{
+			get
+			{
+				return Input.mousePosition.x <= 0 || Input.mousePosition.y <= 0 || Input.mousePosition.x >= Screen.width || Input.mousePosition.y >= Screen.height;
 			}
 		}
 
@@ -45,9 +55,15 @@ namespace CraftingLegends.Core
 
 		public static Vector2 mouseInWorldSpace
 		{
-			get {
+			get
+			{
 				return Camera.main.ScreenToWorldPoint(Input.mousePosition);
 			}
+		}
+
+		public static Vector2 GetMouseInWorldSpace(Camera camera)
+		{
+			return camera.ScreenToWorldPoint(Input.mousePosition);
 		}
 
 		public static Vector3 GetNormalizedDirection(Vector3 fromPos, Vector3 toPos)
@@ -127,6 +143,22 @@ namespace CraftingLegends.Core
 
 		#endregion
 
+		public static void DestroyInScene<T>(bool immediately = false) where T : MonoBehaviour
+		{
+			var objects = GameObject.FindObjectsOfType<T>();
+			for (int i = 0; i < objects.Length; i++)
+			{
+				if (immediately)
+				{
+					GameObject.DestroyImmediate(objects[i].gameObject);
+				}
+				else
+				{
+					GameObject.Destroy(objects[i].gameObject);
+				}
+			}
+		}
+
 		public static float TestMethod(Action actionToBeTested, string testName, int numberOfExecutions = 50, bool printDebug = true)
 		{
 			float startTime = Time.realtimeSinceStartup;
@@ -163,18 +195,58 @@ namespace CraftingLegends.Core
 			return new Color(red / 255f, green / 255f, blue / 255f);
 		}
 
+		public static Color WithAlpha(this Color source, float alpha)
+		{
+			source.a = alpha;
+			return source;
+		}
+
 		public static string ColorToHex(Color32 color)
 		{
-			string hex = color.r.ToString("X2") + color.g.ToString("X2") + color.b.ToString("X2");
+			string hex = color.r.ToString("X2") + color.g.ToString("X2") + color.b.ToString("X2") + color.a.ToString("X2");
 			return hex;
 		}
-		
+
 		public static Color HexToColor(string hex)
 		{
-			byte r = byte.Parse(hex.Substring(0,2), System.Globalization.NumberStyles.HexNumber);
-			byte g = byte.Parse(hex.Substring(2,2), System.Globalization.NumberStyles.HexNumber);
-			byte b = byte.Parse(hex.Substring(4,2), System.Globalization.NumberStyles.HexNumber);
-			return new Color32(r,g,b, 255);
+			byte r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+			byte g = byte.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
+			byte b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+			byte a = byte.Parse(hex.Substring(6, 2), System.Globalization.NumberStyles.HexNumber);
+			return new Color32(r, g, b, a);
+		}
+
+		public static string ColorizeString(string desc, Color color)
+		{
+			return "<color=#" + ColorToHex(color) + ">" + desc + "</color>";
+		}
+
+		public static string InsertSpaceBetweenUppercase(string source)
+		{
+			StringBuilder builder = new StringBuilder();
+			foreach (char c in source)
+			{
+				if (Char.IsUpper(c) && builder.Length > 0) builder.Append(' ');
+				builder.Append(c);
+			}
+			return builder.ToString();
+		}
+
+		public static Vector2 RoundVector(Vector2 vec)
+		{
+			vec.x = Mathf.Round(vec.x);
+			vec.y = Mathf.Round(vec.y);
+
+			return vec;
+		}
+
+		public static Vector3 RoundVector(Vector3 vec)
+		{
+			vec.x = Mathf.Round(vec.x);
+			vec.y = Mathf.Round(vec.y);
+			vec.z = Mathf.Round(vec.z);
+
+			return vec;
 		}
 	}
 }

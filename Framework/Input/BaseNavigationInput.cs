@@ -171,5 +171,16 @@ namespace CraftingLegends.Framework
 			if (current != null)
 				current.InputBack();
 		}
+
+		public bool acceptsSecondaryButtons
+		{
+			get
+			{
+				if (current == null)
+					return false;
+
+				return current.acceptsSecondaryButtons;
+			}
+		}
 	}
 }

@@ -22,7 +22,7 @@ namespace CraftingLegends.Framework
 		private bool _isActive = true;
 
 		private Transform _transform;
-		private Actor _actor;
+		private Actor2D _actor;
 
 		// ================================================================================
 		//  unity methods
@@ -32,7 +32,7 @@ namespace CraftingLegends.Framework
 		{
 			_transform = transform;
 
-			_actor = GetComponent<Actor>();
+			_actor = GetComponent<Actor2D>();
 			if (_actor != null)
 				_actor.stateChanged += ActorStateChanged;
 		}
@@ -40,12 +40,12 @@ namespace CraftingLegends.Framework
 		void Update()
 		{
 			if (_isActive)
-				_transform.position = new Vector3(_transform.position.x, _transform.position.y, _transform.position.y + offset);
+				_transform.position = new Vector3(_transform.position.x, _transform.position.y, _transform.position.y * 0.1f + offset);
 		}
 
 		public Vector3 UpdatePosition(Vector3 current)
 		{
-			return new Vector3(current.x, current.y, current.y + offset);
+			return new Vector3(current.x, current.y, current.y * 0.1f + offset);
 		}
 
 		// ================================================================================
@@ -54,13 +54,13 @@ namespace CraftingLegends.Framework
 
 		private void ActorStateChanged(IActor activeActor, ActorState state)
 		{
-			if (state == ActorState.Dead && toBackgroundWhenDead == true)
-			{
-				// set a bit further towards background
-				_transform.position = new Vector3(_transform.position.x, _transform.position.y, _transform.position.y + 1.0f + offset);
+			//if (state == ActorState.Dead && toBackgroundWhenDead == true)
+			//{
+			//	// set a bit further towards background
+			//	_transform.position = new Vector3(_transform.position.x, _transform.position.y, _transform.position.y + 1.0f + offset);
 
-				_isActive = false;
-			}
+			//	_isActive = false;
+			//}
 
 			// reset depth rendering when actor is active again
 			if (activeActor.isAlive && !_isActive)

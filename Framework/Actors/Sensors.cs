@@ -11,7 +11,7 @@ namespace CraftingLegends.Framework
 		//  Sensor Events
 		// --------------------------------------------------------------------------------
 
-		public delegate void SensorEventDelegate(SensorEvent type, Actor otherActor);
+		public delegate void SensorEventDelegate(SensorEvent type, Actor2D otherActor);
 		public event SensorEventDelegate sensorEvent;
 
 		// ================================================================================
@@ -20,7 +20,7 @@ namespace CraftingLegends.Framework
 
 		public string Tag = "Player";
 
-		public List<Actor> actors = new List<Actor>();
+		public List<Actor2D> actors = new List<Actor2D>();
 
 		public bool ActorsDetected
 		{
@@ -49,7 +49,7 @@ namespace CraftingLegends.Framework
 		{
 			if (other.tag == Tag)
 			{
-				Actor actor = other.GetComponent<Actor>();
+				Actor2D actor = other.GetComponent<Actor2D>();
 				if (actor != null && !actors.Contains(actor) && actor.isAlive)
 				{
 					actors.Add(actor);
@@ -66,9 +66,9 @@ namespace CraftingLegends.Framework
 		{
 			if (!actor.isAlive)
 			{
-				if (actors.Contains(actor as Actor))
+				if (actors.Contains(actor as Actor2D))
 				{
-					RemoveActor(actor as Actor);
+					RemoveActor(actor as Actor2D);
 				}
 				else
 				{
@@ -81,7 +81,7 @@ namespace CraftingLegends.Framework
 		{
 			if (other.tag == Tag)
 			{
-				Actor actor = other.GetComponent<Actor>();
+				Actor2D actor = other.GetComponent<Actor2D>();
 				RemoveActor(actor);
 			}
 		}
@@ -90,7 +90,7 @@ namespace CraftingLegends.Framework
 		//  public methods
 		// --------------------------------------------------------------------------------
 
-		public Actor GetMostWoundedActor()
+		public Actor2D GetMostWoundedActor()
 		{
 			UpdateList();
 
@@ -99,12 +99,12 @@ namespace CraftingLegends.Framework
 				return null;
 			}
 
-			Actor targetActor = actors[0];
-			float woundAmount = targetActor.health.woundedAmount;
+			Actor2D targetActor = actors[0];
+			float woundAmount = targetActor.health.missingAmount;
 
 			for (int i = 1; i < actors.Count; i++)
 			{
-				float newHealthAmount = actors[i].health.woundedAmount;
+				float newHealthAmount = actors[i].health.missingAmount;
 				if (newHealthAmount > woundAmount)
 				{
 					woundAmount = newHealthAmount;
@@ -115,7 +115,7 @@ namespace CraftingLegends.Framework
 			return targetActor;
 		}
 
-		public Actor GetNearestActor()
+		public Actor2D GetNearestActor()
 		{
 			UpdateList();
 
@@ -125,7 +125,7 @@ namespace CraftingLegends.Framework
 			}
 
 			Vector2 position = _transform.position;
-			Actor nearestActor = actors[0];
+			Actor2D nearestActor = actors[0];
 			float foundDistance = (position - nearestActor.position2D).sqrMagnitude;
 
 			for (int i = 1; i < actors.Count; i++)
@@ -145,7 +145,7 @@ namespace CraftingLegends.Framework
 		//  private methods
 		// --------------------------------------------------------------------------------
 
-		private void RemoveActor(Actor actor)
+		private void RemoveActor(Actor2D actor)
 		{
 			if (actor != null && actors.Contains(actor))
 			{

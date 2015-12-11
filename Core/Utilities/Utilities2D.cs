@@ -66,9 +66,21 @@ namespace CraftingLegends.Core
 			return GetHitFromPointer(mask);
 		}
 
+		public static Transform GetHitFromPointerOnLayers(Camera camera, params string[] layerNames)
+		{
+			int mask = Utilities.LayerMask(layerNames);
+			return GetHitFromPointer(camera, mask);
+		}
+
 		public static Transform GetHitFromPointer(int layerMask = int.MaxValue)
 		{
 			RaycastHit2D hit = Physics2D.Raycast(new Vector2(Camera.main.ScreenToWorldPoint(Input.mousePosition).x, Camera.main.ScreenToWorldPoint(Input.mousePosition).y), Vector2.zero, 0, layerMask);
+			return hit.transform;
+		}
+
+		public static Transform GetHitFromPointer(Camera camera, int layerMask = int.MaxValue)
+		{
+			RaycastHit2D hit = Physics2D.Raycast(new Vector2(camera.ScreenToWorldPoint(Input.mousePosition).x, camera.ScreenToWorldPoint(Input.mousePosition).y), Vector2.zero, 0, layerMask);
 			return hit.transform;
 		}
 
@@ -101,16 +113,102 @@ namespace CraftingLegends.Core
 			return hit;
 		}
 
+		public static Transform GetNearestHit(RaycastHit2D[] hits, Vector2 pos)
+		{
+			if (hits.Length == 0)
+				return null;
+
+			Transform hit = hits[0].transform;
+			float distance = Vector2.Distance(pos, hit.position);
+
+			for (int i = 1; i < hits.Length; i++)
+			{
+				float newDistance = Vector2.Distance(pos, hits[i].transform.position);
+				if (newDistance < distance)
+				{
+					distance = newDistance;
+					hit = hits[i].transform;
+				}
+			}
+
+			return hit;
+		}
+
+		public static Transform GetNearestHit(Collider2D[] hits, Vector2 pos)
+		{
+			if (hits.Length == 0)
+				return null;
+
+			Transform hit = hits[0].transform;
+			float distance = Vector2.Distance(pos, hit.position);
+
+			for (int i = 1; i < hits.Length; i++)
+			{
+				float newDistance = Vector2.Distance(pos, hits[i].transform.position);
+				if (newDistance < distance)
+				{
+					distance = newDistance;
+					hit = hits[i].transform;
+				}
+			}
+
+			return hit;
+		}
+
+		public static Transform GetNearestHit(Collider2D[] hits, Transform pos)
+		{
+			if (hits.Length == 0)
+				return null;
+
+			Transform hit = null;
+			float distance = float.MaxValue;
+
+			for (int i = 0; i < hits.Length; i++)
+			{
+				Transform target = hits[i].transform;
+
+				if (target == pos)
+					continue;
+
+				float newDistance = Vector2.Distance(pos.position, target.position);
+				if (newDistance < distance)
+				{
+					distance = newDistance;
+					hit = target;
+				}
+			}
+
+			return hit;
+		}
+
 		public static Vector2 GetNormalizedDirection(Vector2 fromPos, Vector2 toPos)
 		{
 			Vector2 direction = toPos - fromPos;
 			return direction.normalized;
 		}
 
+		public static Vector2 GetRandomSpawnPosInFront(Vector2 spawnPos, float radius)
+		{
+			Vector2 randomOffset = Random.insideUnitCircle * radius;
+
+			if (randomOffset.y > 0)
+				randomOffset.y = -randomOffset.y;
+			if (randomOffset.y > -0.1f)
+				randomOffset.y = -0.1f;
+
+			return new Vector2(spawnPos.x + randomOffset.x, spawnPos.y + randomOffset.y);
+		}
+
 		public static Vector2 GetRandomSpawnPos(Vector2 spawnPos, float radius)
 		{
 			Vector2 randomOffset = Random.insideUnitCircle * radius;
 			return new Vector2(spawnPos.x + randomOffset.x, spawnPos.y + randomOffset.y);
+		}
+
+		public static Vector2 GetRandomSpawnPos(Vector2 spawnPos, float fromRadius, float toRadius)
+		{
+			float distance = Random.Range(fromRadius, toRadius);
+			return GetRandomSpawnPos(spawnPos, distance);
 		}
 
 		public static float Vector2SqrDistance(Vector2 fromPos, Vector2 toPos)

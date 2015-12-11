@@ -5,13 +5,13 @@ using CraftingLegends.Core;
 
 namespace CraftingLegends.Framework
 {
-    public class Target
+    public class ActorTarget
     {
         // ================================================================================
         //  types
         // --------------------------------------------------------------------------------
 
-        const float PATH_NODE_DISTANCE_SQUARED = 0.2f;
+        const float PATH_NODE_DISTANCE_SQUARED = 0.05f;
 
         public enum TargetType
         {
@@ -64,13 +64,13 @@ namespace CraftingLegends.Framework
         // --------------------------------------------------------------------------------
 
         private Transform _protagonistTransform;
-        private Actor _protagonist;
+        private Actor2D _protagonist;
 
         private Vector2 _targetPosition;
         private Transform _targetTransform;
 
-        private Actor _otherActor;
-        public Actor otherActor
+        private Actor2D _otherActor;
+        public Actor2D otherActor
         {
             get
             {
@@ -104,7 +104,7 @@ namespace CraftingLegends.Framework
         //  constructor
         // --------------------------------------------------------------------------------
 
-        public Target(Actor protagonist, Transform protagonistTransform)
+        public ActorTarget(Actor2D protagonist, Transform protagonistTransform)
         {
             _protagonist = protagonist;
             _protagonistTransform = protagonistTransform;
@@ -138,10 +138,10 @@ namespace CraftingLegends.Framework
                 if (Utilities2D.Vector2SqrDistance(_protagonistTransform.position, targetPos) <= _targetReachedDistanceSquared)
                 {
                     ReachTarget();
-                }
+				}
                 else
                 {
-                    _isReached = false;
+                    _isReached = false;					
                 }
 
                 // check for next target on path
@@ -152,8 +152,8 @@ namespace CraftingLegends.Framework
                         NextNodeInPath();
                         if (!_hasPath)
                         {
-							_calculatePathAtNextPossibility = true;
-                            ReachTarget(); // TODO: this line was disabled in Indomitable - why?
+							_calculatePathAtNextPossibility = false;
+                            ReachTarget();
                         }
                     }
                 }
@@ -174,13 +174,13 @@ namespace CraftingLegends.Framework
 
         public Vector2 GetCurrentTargetLocation()
         {
-            if (_hasPath && !_path.isFinished)
+            if (_hasPath && !_path.hasFinished)
             {
                 return _path.CurrentPosition;
             }
             else
             {
-                return GetFinalTargetPosition();
+				return GetFinalTargetPosition();
             }
         }
 
@@ -223,7 +223,7 @@ namespace CraftingLegends.Framework
         }
 
         // set other Actor as target
-        public void SetTarget(Actor otherActor, float targetDistance, bool newDetermination = false)
+        public void SetTarget(Actor2D otherActor, float targetDistance, bool newDetermination = false)
         {
             if (_determined == true && newDetermination == false)
             {
@@ -316,6 +316,7 @@ namespace CraftingLegends.Framework
             if (_pathField != null && _protagonist.movementSpeed > 0)
             {
 				_pathField.GetPath(_protagonistTransform.position, GetFinalTargetPosition(), _path);
+
                 _hasPath = _path.isValid;
 				if (!_hasPath)
 				{
@@ -333,8 +334,7 @@ namespace CraftingLegends.Framework
             {
                 _path.NextPosition();
             }
-
-            if (!_path.isValid || _path.isFinished)
+			if (!_path.isValid || _path.hasFinished)
             {
                 _hasPath = false;
             }

@@ -6,25 +6,32 @@ namespace CraftingLegends.Framework
 {
 	public class Vector2Path
 	{
-		public List<Vector2> path = new List<Vector2>();
+		private List<Vector2> _path = new List<Vector2>();
+		private int _count = 0;
+		private int _index = 0;
 
-		public int current = 0;
-		public int count = 0;
-		public bool isFinished = false;
+		private bool _hasFinished = false;
+		public bool hasFinished
+		{
+			get
+			{
+				return _hasFinished;
+			}
+		}
 
 		public bool isValid
 		{
 			get
 			{
-				return count > 0;
+				return _count > 0;
 			}
 		}
 
-		public Vector2Path(int allocationSize = 50)
+		public int Count
 		{
-			for (int i = 0; i < allocationSize; i++)
+			get
 			{
-				path.Add(new Vector2(0, 0));
+				return _count;
 			}
 		}
 
@@ -32,49 +39,76 @@ namespace CraftingLegends.Framework
 		{
 			get
 			{
-				return path[index];
+				return _path[index];
 			}
-		}
-
-		public void AddPosition(float x, float y)
-		{
-			if (count == path.Count - 1)
-			{
-				path.Add(new Vector2(x, y));
-				count++;
-				return;
-			}
-
-			path[count] = new Vector2(x, y);
-
-			count++;
-
-			isFinished = false;
 		}
 
 		public Vector2 CurrentPosition
 		{
 			get
 			{
-				return path[current];
+				return _path[_index];
 			}
+		}
+
+		// ================================================================================
+		//  constructor
+		// --------------------------------------------------------------------------------
+
+		public Vector2Path(int allocationSize = 50)
+		{
+			for (int i = 0; i < allocationSize; i++)
+			{
+				_path.Add(new Vector2(0, 0));
+			}
+		}
+
+		// ================================================================================
+		//  public methods
+		// --------------------------------------------------------------------------------
+
+		public void AddPosition(float x, float y)
+		{
+			if (_count == _path.Count)
+			{
+				_path.Add(new Vector2(x, y));
+				_count++;
+				_hasFinished = false;
+				return;
+			}
+
+			_path[_count] = new Vector2(x, y);
+			_count++;
+			_hasFinished = false;
 		}
 
 		public void NextPosition()
 		{
-			current++;
+			_index++;
 
-			if (current >= count)
+			if (_index >= _count)
 			{
-				isFinished = true;
+				_hasFinished = true;
 			}
 		}
 
 		public void Clear()
 		{
-			current = 0;
-			count = 0;
-			isFinished = true;
+			_index = 0;
+			_count = 0;
+			_hasFinished = true;
+		}
+
+		public override string ToString()
+		{
+			string posString = "";
+
+			for (int i = 0; i < _count; i++)
+			{
+				posString += "[" + _path[i] + "] ";
+			}
+
+			return posString;
 		}
 	}
 }

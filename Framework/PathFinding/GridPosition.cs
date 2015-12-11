@@ -4,6 +4,7 @@ namespace CraftingLegends.Framework
 	/// <summary>
 	/// Position in a square-based map with rows and columns
 	/// </summary>
+	[System.Serializable]
 	public struct GridPosition
 	{
 		/*

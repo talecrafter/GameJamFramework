@@ -11,5 +11,7 @@ namespace CraftingLegends.Framework
         void InputRight();
         void InputEnter();
         void InputBack();
+
+		bool acceptsSecondaryButtons { get; }
     }
 }

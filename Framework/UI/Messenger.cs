@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using CraftingLegends.Framework;
+using System;
 
 namespace CraftingLegends.Framework
 {
@@ -12,7 +13,10 @@ namespace CraftingLegends.Framework
 
 		private FadingTimer _timer;
 
+		[SerializeField]
 		private Text[] _text = null;
+
+		private string _currentMessage = "";
 
 		// ================================================================================
 		//  unity methods
@@ -23,7 +27,12 @@ namespace CraftingLegends.Framework
 			_timer = new FadingTimer(0.4f, displayDuration, 0.4f);
 			_timer.Stop();
 
-			if (_text == null)
+			if (_text == null || _text.Length == 0)
+			{
+				_text = GetComponentsInChildren<Text>();
+			}
+
+			if (_text == null || _text.Length == 0)
 			{
 				// the MessengerText Object will be inside the MainCanvas
 				var messengerObject = GameObject.Find("MessengerText") as GameObject;
@@ -63,11 +72,24 @@ namespace CraftingLegends.Framework
 			UpdateColor();
 		}
 
+		public void SetText(string newMessage)
+		{
+			for (int i = 0; i < _text.Length; i++)
+			{
+				_text[i].text = newMessage;
+			}
+		}
+
 		// ================================================================================
 		//  public methods
 		// --------------------------------------------------------------------------------
 
 		public void Message(string newMessage)
+		{
+			Message(newMessage, displayDuration);
+        }
+
+		public void Message(string newMessage, float duration)
 		{
 			for (int i = 0; i < _text.Length; i++)
 			{
@@ -75,10 +97,25 @@ namespace CraftingLegends.Framework
 				_text[i].enabled = true;
 			}
 
-			_timer.Reset();
+			_timer.SetDuration(duration);
+			
+			// if message is the same, let it be or reset timer at point of completed fade in
+			if (!string.IsNullOrEmpty(newMessage) && newMessage == _currentMessage)
+			{
+				if (!_timer.IsInFadeIn)
+				{
+					_timer.SetToFadedInPoint();
+				}				
+			}
+			else
+			{
+				_timer.Reset();
+			}
+
 
 			UpdateColor();
-        }
+			_currentMessage = newMessage;
+		}
 
 		// ================================================================================
 		//  private methods

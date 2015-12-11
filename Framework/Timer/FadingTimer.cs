@@ -14,6 +14,17 @@ namespace CraftingLegends.Framework
 
 		public float progress;
 
+		public float timeElapsedProgress
+		{
+			get
+			{
+				if (_elapsedTime > _fullDuration)
+					return 1f;
+
+				return _elapsedTime / _fullDuration;
+			}
+		}
+
 		// ================================================================================
 		//  properties
 		// --------------------------------------------------------------------------------
@@ -72,6 +83,14 @@ namespace CraftingLegends.Framework
 			}
 		}
 
+		public bool IsInFadeIn
+		{
+			get
+			{
+				return !hasEnded && _elapsedTime < _fadeInTime;
+            }
+		}
+
 		public void Update()
 		{
 			_elapsedTime += Time.deltaTime;
@@ -82,14 +101,35 @@ namespace CraftingLegends.Framework
 		{
 			_timeHasEnded = false;
 			_elapsedTime = 0;
-			progress = 0;
+
+			UpdateTime();
 		}
 
 		public void Stop()
 		{
-			progress = 1.0f;
 			_timeHasEnded = true;
+
+			if (_fadeOutTime > 0)
+			{
+				progress = 0;
+			}
+			else
+			{
+				progress = 1f;
+			}
 		}
+
+		public void SetToFadedInPoint()
+		{
+			_timeHasEnded = false;
+			_elapsedTime = _fadeInTime;
+			UpdateTime();
+		}
+
+		public void SetDuration(float duration)
+		{
+			_fullDuration = duration;
+        }
 
 		// ======================================================================
 		//	private methods
@@ -104,22 +144,24 @@ namespace CraftingLegends.Framework
 			}
 
 			// calculate percent
-			progress = 1.0f;
+			progress = 1f;
 			if (_elapsedTime < _fadeInTime)
 			{
 				progress = _elapsedTime / _fadeInTime;
 			}
 			if (!_holdAfterFadeIn && _elapsedTime > _fullDuration - _fadeOutTime)
 			{
-				progress = 1 - (_elapsedTime - (_fullDuration - _fadeOutTime)) / _fadeOutTime;
+				progress = 1f - (_elapsedTime - (_fullDuration - _fadeOutTime)) / _fadeOutTime;
 			}
+
+			// clamp values
 			if (progress < 0)
 			{
 				progress = 0;
 			}
-			if (progress > 1.0f)
+			if (progress > 1f)
 			{
-				progress = 1.0f;
+				progress = 1f;
 			}
 		}
 	}

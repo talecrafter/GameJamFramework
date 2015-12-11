@@ -4,7 +4,6 @@ using System.Linq;
 
 namespace CraftingLegends.Core
 {
-
 	public static class TransformExtensions
 	{
 		public static List<Transform> GetChildren(this Transform transform)
@@ -18,12 +17,41 @@ namespace CraftingLegends.Core
 			return children;
 		}
 
+		public static void DestroyChildren<T>(this Transform root) where T : MonoBehaviour
+		{
+			var objects = root.GetComponentsInChildren<T>();
+			for (int i = 0; i < objects.Length; i++)
+			{
+				if (objects[i] == null)
+					continue;
+
+				if (objects[i].transform == root)
+					continue;
+
+				if (Application.isPlaying)
+				{
+					GameObject.Destroy(objects[i].gameObject);
+				}
+				else
+				{
+					GameObject.DestroyImmediate(objects[i].gameObject);
+				}
+			}
+		}
+
 		public static void DestroyChildren(this Transform root)
 		{
-			int childCount = root.childCount;
-			for (int i = 0; i < childCount; i++)
+			if (Application.isPlaying)
 			{
-				GameObject.Destroy(root.GetChild(i).gameObject);
+				int childCount = root.childCount;
+				for (int i = 0; i < childCount; i++)
+				{
+					GameObject.Destroy(root.GetChild(i).gameObject);
+				}
+			}
+			else
+			{
+				root.DestroyChildrenDuringEditTime();
 			}
 		}
 
@@ -82,7 +110,7 @@ namespace CraftingLegends.Core
 
 		#region positions
 
-		public static Vector3 GetCenter(this List<Transform> transforms)
+		public static Vector3 GetCenterWeighted(this List<Transform> transforms)
 		{
 			Vector3 sum = Vector3.zero;
 			int count = 0;
@@ -104,11 +132,47 @@ namespace CraftingLegends.Core
 			return sum / count;
 		}
 
+		public static Vector3 GetCenter(this List<Transform> transforms)
+		{
+			if (transforms == null || transforms.Count == 0 || transforms[0] == null)
+			{
+				return Vector3.zero;
+            }
+
+			Vector3 min = transforms[0].position;
+			Vector3 max = transforms[0].position;
+
+			for (int i = 1; i < transforms.Count; i++)
+			{
+				if (transforms[i] != null)
+				{
+					Vector3 pos = transforms[i].position;
+
+					if (pos.x < min.x)
+						min.x = pos.x;
+					if (pos.x > max.x)
+						max.x = pos.x;
+
+					if (pos.y < min.y)
+						min.y = pos.y;
+					if (pos.y > max.y)
+						max.y = pos.y;
+
+					if (pos.z < min.z)
+						min.z = pos.z;
+					if (pos.z > max.z)
+						max.z = pos.z;
+				}
+			}
+
+			return Vector3.Lerp(min, max, 0.5f);
+		}
+
 		#endregion
 
 		#region Instantiate Objects
 
-		public static T Instantiate<T>(this Transform transform, T prefab, Vector3? position = null, Quaternion? rotation = null, Vector3? scale = null) where T : Component
+		public static T InstantiateChild<T>(this Transform transform, T prefab, Vector3? position = null, Quaternion? rotation = null, Vector3? scale = null) where T : Component
 		{
 			Vector3 pos = position ?? transform.position;
 			Quaternion rot = rotation ?? Quaternion.identity;
@@ -127,7 +191,7 @@ namespace CraftingLegends.Core
 			return newObject;
 		}
 
-		public static GameObject InstantiateGameObject(this Transform transform, GameObject prefab, Vector3? position = null, Quaternion? rotation = null, Vector3? scale = null)
+		public static GameObject InstantiateChildGameObject(this Transform transform, GameObject prefab, Vector3? position = null, Quaternion? rotation = null, Vector3? scale = null)
 		{
 			Vector3 pos = position ?? transform.position;
 			Quaternion rot = rotation ?? Quaternion.identity;

@@ -82,6 +82,10 @@ namespace CraftingLegends.Framework
         [HideInInspector]
         public LevelGrid levelGrid = null;
 		public static LevelGrid LevelGrid { get { return Instance.levelGrid; } }
+		public virtual LevelGrid GetLevelGrid(Vector2 pos)
+		{
+			return LevelGrid;
+		}
 
 		[HideInInspector]
 		public CameraShake screenShake;
@@ -124,6 +128,8 @@ namespace CraftingLegends.Framework
 
 		GameState? _stateBeforeLoading = null;
 
+		private AsyncOperation loadingOperation = null;
+
 		// ================================================================================
 		//  unity methods
 		// --------------------------------------------------------------------------------
@@ -144,8 +150,16 @@ namespace CraftingLegends.Framework
                     _loadingTimer.Update();
                 }
 
-                if (!Application.isLoadingLevel)
+				if (loadingOperation != null)
+				{
+					if (loadingOperation.isDone)
+						loadingOperation = null;
+				}
+
+                if (loadingOperation == null)
                 {
+					loadingOperation = null;
+
                     if (_loadingTimer != null)
                     {
                         if (_loadingTimer.hasEnded)
@@ -199,7 +213,7 @@ namespace CraftingLegends.Framework
         //  public methods
         // --------------------------------------------------------------------------------
 
-        public void Resume()
+        public virtual void Resume()
         {
             _automaticallyPaused = false;
             Time.timeScale = 1.0f;
@@ -263,6 +277,12 @@ namespace CraftingLegends.Framework
 
             Instance = this;
 
+			TextManagerInit textManagerInit = GetComponentInChildren<TextManagerInit>();
+			if (textManagerInit != null)
+			{
+				textManagerInit.Init();
+			}
+
             baseAudioManager = GetComponent<BaseAudioManager>();
 			baseNavigationInput = GetComponent<BaseNavigationInput>();
 			messenger = GetComponent<Messenger>();
@@ -313,7 +333,7 @@ namespace CraftingLegends.Framework
             state = GameState.Loading;
             SetLoadingTimer();
 			yield return null;
-			Application.LoadLevel(levelName);
+			loadingOperation = Application.LoadLevelAsync(levelName);
         }
 
         protected IEnumerator LoadLevel(int levelIndex)
@@ -321,7 +341,7 @@ namespace CraftingLegends.Framework
             state = GameState.Loading;
             SetLoadingTimer();
             yield return null;
-            Application.LoadLevel(levelIndex);
+			loadingOperation = Application.LoadLevelAsync(levelIndex);
         }
     }
 

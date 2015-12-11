@@ -394,19 +394,26 @@ namespace CraftingLegends.Core
         //  loading and saving
         // --------------------------------------------------------------------------------
 
-        public static void Load()
+        public static void Load(TextAsset configAsset = null, List<TextAsset> languageFiles = null)
         {
             Clear();
 
-            LoadConfigFile();
+            LoadConfigFile(configAsset);
 
             if (_languages.Count == 0)
                 InitNewDatabase();
 
-            foreach (var languageId in _languages)
-            {
-                LoadLanguageFile(languageId);
-            }
+			for (int i = 0; i < _languages.Count; i++)
+			{
+				if (languageFiles != null && i < languageFiles.Count)
+				{
+					LoadLanguageFile(_languages[i], languageFiles[i]);
+				}
+				else
+				{
+					LoadLanguageFile(_languages[i]);
+				}
+			}
 
             _hasLoaded = true;
 
@@ -445,10 +452,11 @@ namespace CraftingLegends.Core
             }
         }
 
-        private static void LoadConfigFile()
+		private static void LoadConfigFile(TextAsset asset = null)
         {
             // load config from Resources folder
-            TextAsset asset = Resources.Load(dataDirectory + "languages") as TextAsset;
+			if (asset == null)
+            asset = Resources.Load(dataDirectory + "languages") as TextAsset;
 
             // parse config file
             if (asset != null)
@@ -472,10 +480,11 @@ namespace CraftingLegends.Core
             }
         }
 
-        private static void LoadLanguageFile(string languageId)
+        private static void LoadLanguageFile(string languageId, TextAsset asset = null)
         {
             // load json file from Resources folder
-            TextAsset asset = Resources.Load(dataDirectory + "text_" + languageId) as TextAsset;
+			if (asset == null)
+				asset = Resources.Load(dataDirectory + "text_" + languageId) as TextAsset;
 
             // parse language data
             if (asset != null)

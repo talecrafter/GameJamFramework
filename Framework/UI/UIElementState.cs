@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Random = UnityEngine.Random;
 
-namespace CraftingLegendsFramework
+namespace CraftingLegends.Framework
 {
 	public enum UIElementState
 	{

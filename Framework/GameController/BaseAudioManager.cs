@@ -7,9 +7,10 @@ namespace CraftingLegends.Framework
 	[RequireComponent(typeof(AudioSource))]
 	public class BaseAudioManager : MonoBehaviour
 	{
-		const float PROGRESS_UNTIL_NEXT_PLAY = 0.5f;
+		const float PROGRESS_UNTIL_NEXT_PLAY = 0.7f;
 
-		public AudioClip buttonSound;
+		[SerializeField]
+		private AudioClip _buttonSound;
 
 		private AudioSource _source;
 
@@ -27,7 +28,7 @@ namespace CraftingLegends.Framework
 
 		public void PlayButtonSound()
 		{
-			Play(buttonSound);
+			Play(_buttonSound);
 		}
 
 		// plays a random command sound
@@ -64,19 +65,22 @@ namespace CraftingLegends.Framework
 				}
 			}
 
-			Play(clip, volume);
+			PlayWithVariation(clip, volume);
 		}
 
 		public void Play(AudioClip clip, float volume = 1.0f)
 		{
-			_source.PlayOneShot(clip, _source.volume * volume);
+			if (clip != null)
+			{
+				_source.PlayOneShot(clip, _source.volume * volume);
+			}
 		}
 
 		public void PlayWithVariation(AudioClip clip, float volume = 1.0f)
 		{
-			_source.pitch = Random.Range(.9f, 1.1f);
-			_source.volume = Random.Range(.9f, 1f);
-			_source.PlayOneShot(clip, _source.volume * volume);
+			_source.pitch = Random.Range(.97f, 1.0f);
+			float volumeVariation = Random.Range(.85f, 1f);
+			_source.PlayOneShot(clip, _source.volume * volume * volumeVariation);
 		}
 
 		// ================================================================================

@@ -13,7 +13,7 @@ namespace CraftingLegends.Framework
 
 		void Awake()
 		{
-			Actor actor = GetComponent<Actor>();
+			Actor2D actor = GetComponent<Actor2D>();
 			actor.movementSpeed += Random.Range(1f, multiplier);
 		}
 	}

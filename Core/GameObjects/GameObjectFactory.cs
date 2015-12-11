@@ -12,7 +12,7 @@ namespace CraftingLegends.Core
 		#region Instantiate Prefabs
 
 		// instantiate a component and its gameoject structure
-		public static T Instantiate<T>(T prefab, Vector3? position = null, Quaternion? rotation = null, Vector3? scale = null) where T : Component
+		public static T Instantiate<T>(T prefab, Vector3? position = null, Quaternion? rotation = null, Vector3? scale = null, Transform parent = null) where T : Component
 		{
 			if (prefab == null)
 			{
@@ -31,8 +31,23 @@ namespace CraftingLegends.Core
                 if (scale.HasValue)
                     newObject.transform.localScale = scale.Value;
             }
+
+			if (parent != null)
+				newObject.transform.SetParent(parent);
+
             return newObject;
         }
+
+		public static T Clone<T>(T existingObject, Vector3? position = null, Quaternion? rotation = null, Vector3? scale = null) where T : Component
+		{
+			if (existingObject == null)
+			{
+				Debug.LogWarning("Prefab is null");
+				return null;
+			}
+
+			return Instantiate<T>(existingObject, position, rotation, scale, existingObject.transform.parent);			
+		}
 
 		// instantiate a gameobject
 		public static GameObject GameObject(GameObject prefab, Vector3? position = null, Quaternion? rotation = null, Vector3? scale = null)

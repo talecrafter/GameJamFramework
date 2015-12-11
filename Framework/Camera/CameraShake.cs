@@ -26,7 +26,7 @@ namespace CraftingLegends.Framework
 
 		void Update()
 		{
-			if (MainBase.isRunningOrInSequence)
+			if (MainBase.isRunningOrInSequence && Time.timeScale > 0)
 			{
 				if (_shake > 0.0f)
 				{

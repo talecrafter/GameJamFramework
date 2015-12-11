@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using Random = UnityEngine.Random;
 using CraftingLegends.Framework;
 
-[CustomEditor(typeof(Actor))]
+[CustomEditor(typeof(Actor2D))]
 public class ActorInspector : Editor
 {
 	public override void OnInspectorGUI()
@@ -29,13 +29,13 @@ public class ActorInspector : Editor
 
 	private void KillCharacter()
 	{
-		Actor actor = target as Actor;
+		Actor2D actor = target as Actor2D;
 		actor.Kill();
 	}
 
 	private void DamageCharacter()
 	{
-		Actor actor = target as Actor;
+		Actor2D actor = target as Actor2D;
 		actor.ApplyDamage(2f);
 	}
 }

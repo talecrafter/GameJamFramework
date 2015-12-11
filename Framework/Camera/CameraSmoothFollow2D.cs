@@ -48,9 +48,13 @@ namespace CraftingLegends.Framework
 		public float horizontalFollowSpeed = 2.0f;
 		public float verticalFollowSpeed = 2.0f;
 
+		private float _horizontalFollowSpeedStart = 2.0f;
+		private float _verticalFollowSpeedStart = 2.0f;
+
 		public float smoothEdge = 2.0f;
 
 		public float minimumOrthoGraphicSize = 1.0f;
+		public float zoomSpeed = 5f;
 
 		private bool _canMoveUp = false;
 		public bool canMoveUp { get { return _canMoveUp; } }
@@ -84,6 +88,8 @@ namespace CraftingLegends.Framework
 		protected CameraShake _cameraShake;
 		public CameraShake shaker {  get { return _cameraShake; } }
 
+		private float _targetOrthoSize;
+
 		// ================================================================================
 		//  unity methods
 		// --------------------------------------------------------------------------------
@@ -91,6 +97,10 @@ namespace CraftingLegends.Framework
 		protected void Awake()
 		{
 			Init();
+
+			_horizontalFollowSpeedStart = horizontalFollowSpeed;
+			_verticalFollowSpeedStart = verticalFollowSpeed;
+			_targetOrthoSize = _camera.orthographicSize;
 		}
 
 		protected void OnLevelWasLoaded(int levelIndex)
@@ -100,6 +110,14 @@ namespace CraftingLegends.Framework
 
 		protected void LateUpdate()
 		{
+			// update zooming
+			if (_camera.orthographicSize != _targetOrthoSize)
+			{
+				_camera.orthographicSize = Mathf.Lerp(_camera.orthographicSize, _targetOrthoSize, Time.deltaTime * zoomSpeed);
+				if (Mathf.Abs(_camera.orthographicSize - _targetOrthoSize) < 0.001f)
+                    _camera.orthographicSize = _targetOrthoSize;
+            }
+
 			if (hasTarget)
 			{
 				FollowTarget();
@@ -174,25 +192,30 @@ namespace CraftingLegends.Framework
 			}
 		}
 
-		public void SetOrthographicSize(float size)
+		public void SetOrthoSize(float size)
 		{
+			_targetOrthoSize = size;
 			_camera.orthographicSize = size;
 
 			ApplyBounds();
+		}
+
+		public void SetTargetOrthoSize(float size)
+		{
+			_targetOrthoSize = size;
 		}
 
 		// ================================================================================
 		//  private methods
 		// --------------------------------------------------------------------------------
 
-		public void Init()
+		private void Init()
 		{
 			_camera = GetComponentInChildren<Camera>();
 			_cameraShake = GetComponentInChildren<CameraShake>();
 			_transform = transform;
 
 			LevelBoundaries levelBoundaries = FindObjectOfType<LevelBoundaries>();
-
 			SetBoundaries(levelBoundaries);
 		}
 
@@ -319,7 +342,7 @@ namespace CraftingLegends.Framework
 
 		private Rect ApplyHardBounds(Rect cameraRect)
 		{
-			float errorMargin = _bounds.height / 100.0f;
+			float errorMargin = 0.001f;
 
 			if (cameraRect.xMin <= _bounds.xMin - errorMargin)
 			{
@@ -350,6 +373,22 @@ namespace CraftingLegends.Framework
 			}
 
 			return cameraRect;
+		}
+
+		// ================================================================================
+		//  follow speed
+		// --------------------------------------------------------------------------------
+
+		public void ScaleFollowSpeed(float scale)
+		{
+			horizontalFollowSpeed = _horizontalFollowSpeedStart * scale;
+			verticalFollowSpeed = _verticalFollowSpeedStart * scale;
+		}
+
+		public void ResetFollowSpeed()
+		{
+			horizontalFollowSpeed = _horizontalFollowSpeedStart;
+			verticalFollowSpeed = _verticalFollowSpeedStart;
 		}
 	}
 }

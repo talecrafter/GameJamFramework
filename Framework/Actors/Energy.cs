@@ -1,17 +1,25 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
 namespace CraftingLegends.Framework
 {
 	public class Energy
 	{
-		#region values
+		// ================================================================================
+		//  values
+		// --------------------------------------------------------------------------------
 
 		const float min = 0;
 
+		private float _current = 0;
+		private float _max = 1;
 		private float _startValue;
 
-		private float _current = 0;
+		// ================================================================================
+		//  state
+		// --------------------------------------------------------------------------------
+
 		public float current
 		{
 			get { return _current; }
@@ -21,23 +29,18 @@ namespace CraftingLegends.Framework
 			}
 		}
 
-		public float woundedAmount
+		public float max
+		{
+			get { return _max; }
+		}
+
+		public float missingAmount
 		{
 			get
 			{
 				return _max - _current;
 			}
 		}
-
-		private float _max = 1;
-		public float max
-		{
-			get { return _max; }
-		}
-
-		#endregion
-
-		#region state
 
 		public float proportion
 		{
@@ -59,8 +62,6 @@ namespace CraftingLegends.Framework
 			get { return _max - min; }
 		}
 
-		#endregion
-
 		// ================================================================================
 		//  constructor
 		// --------------------------------------------------------------------------------
@@ -70,89 +71,99 @@ namespace CraftingLegends.Framework
 			_max = max;
 			_current = max;
 			_startValue = _current;
-        }
+		}
 
 		public Energy(float current, float max)
 		{
 			_max = max;
 
-			_current = current;
-			_current = Mathf.Clamp(current, 0, max);
+			this.current = current;
 
 			_startValue = current;
 		}
 
 		// ================================================================================
-		//  adding and removing
+		//  adding
 		// --------------------------------------------------------------------------------
-
-		public void Add(float amount)
-		{
-			float before = _current;
-
-			_current += amount;
-			_current = Mathf.Clamp(_current, 0, _max);
-
-			OnValueChanged();
-
-			if (_current == _max
-				&& before < _current)
-			{
-				OnGotFull();
-			}
-		}
 
 		public void AddPortion(float portion)
 		{
 			Add(portion * range);
 		}
 
-		public void Lose(float amount)
+		public void AddFull()
 		{
-			_current -= amount;
-			_current = Mathf.Clamp(_current, 0, _max);
-
-			OnValueChanged();
+			Add(_max - _current);
 		}
+
+		public void Add(float amount)
+		{
+			float before = _current;
+
+			current += amount;
+
+			// check for events now
+			OnValueChanged();
+			OnGotEnergy(_current - before);
+			if (isFull && before < _current)
+			{
+				OnGotFull();
+			}
+		}
+
+		// ================================================================================
+		//  removing
+		// --------------------------------------------------------------------------------
 
 		public void LosePortion(float portion)
 		{
 			Lose(portion * range);
 		}
 
-		public void SetToFull()
+		public void LoseAll()
 		{
-			if (_current < _max)
-			{
-				_current = _max;
-
-				OnValueChanged();
-				OnGotFull();
-			}
+			Lose(_current);
 		}
+
+		public void Lose(float amount)
+		{
+			if (isEmpty)
+				return;
+
+			float before = _current;
+
+			current -= amount;
+
+			// check for events now
+			OnLostEnergy(before - _current);
+			OnValueChanged();
+		}
+
+		// ================================================================================
+		//  utilities
+		// --------------------------------------------------------------------------------
 
 		public void Reset()
 		{
 			_current = _startValue;
 		}
 
-		public void Empty()
-		{
-			_current = min;
-
-			OnValueChanged();
-		}
-
-		public void EmptySilently()
-		{
-			_current = min;
-		}
-
+		// for balancing
 		public void Scale(float factor)
 		{
 			_max *= factor;
 			_current *= factor;
 			_startValue *= factor;
+		}
+
+		public float GetAmountThatWillBeAdded(float maxPossibleAmount)
+		{
+			return Mathf.Min(maxPossibleAmount, missingAmount);
+		}
+
+		public override string ToString()
+		{
+			return ((int)_current).ToString() + " / " + ((int)max).ToString();
 		}
 
 		// ================================================================================
@@ -161,22 +172,36 @@ namespace CraftingLegends.Framework
 
 		#region events
 
-		public delegate void OnValueChangedDelegate();
-		public delegate void OnGotFullDelegate();
+		public delegate void EnergyDelegate();
+		public delegate void EnergyChangedDelegate(float amount);
 
-		public event OnValueChangedDelegate onValueChanged;
-		public event OnGotFullDelegate onGotFull;
+		public event EnergyDelegate valueChanged;
+		public event EnergyDelegate gotFull;
+		public event EnergyChangedDelegate gotEnergy;
+		public event EnergyChangedDelegate lostEnergy;
 
 		private void OnValueChanged()
 		{
-			if (onValueChanged != null)
-				onValueChanged();
+			if (valueChanged != null)
+				valueChanged();
 		}
 
 		private void OnGotFull()
 		{
-			if (onGotFull != null)
-				onGotFull();
+			if (gotFull != null)
+				gotFull();
+		}
+
+		private void OnGotEnergy(float amount)
+		{
+			if (gotEnergy != null && amount >= 0)
+				gotEnergy(amount);
+		}
+
+		private void OnLostEnergy(float amount)
+		{
+			if (lostEnergy != null && amount > 0)
+				lostEnergy(amount);
 		}
 
 		#endregion

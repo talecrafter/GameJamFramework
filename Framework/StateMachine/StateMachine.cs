@@ -13,7 +13,7 @@ namespace CraftingLegends.Framework
 		private Stack<T> _stack = new Stack<T>();
 
 		// ================================================================================
-		//  public methods
+		//  properties
 		// --------------------------------------------------------------------------------
 
 		public int count
@@ -32,16 +32,26 @@ namespace CraftingLegends.Framework
 			}
 		}
 
-		public void Push(T state)
+		public bool hasState
 		{
-			_stack.Push(state);
-			state.OnEnter();
+			get
+			{
+				return _stack.Count > 0;
+			}
 		}
 
-		public void SwitchTo(T state)
+		// ================================================================================
+		//  core methods
+		// --------------------------------------------------------------------------------
+
+		public void Push(T state)
 		{
-			PopAll();
-			Push(state);
+			if (_stack.Count > 0)
+				_stack.Peek().OnLostFocus();
+
+			_stack.Push(state);
+			state.OnEnter();
+			state.OnGotFocus();
 		}
 
 		public T Pop()
@@ -49,7 +59,12 @@ namespace CraftingLegends.Framework
 			if (_stack.Count > 0)
 			{
 				T state = _stack.Pop();
+				state.OnLostFocus();
 				state.OnExit();
+
+				if (_stack.Count > 0)
+					Peek().OnGotFocus();
+
 				return state;
 			}
 			else
@@ -58,12 +73,22 @@ namespace CraftingLegends.Framework
 			}
 		}
 
-		public IState Peek()
+		// ================================================================================
+		//  public methods
+		// --------------------------------------------------------------------------------
+
+		public T Peek()
 		{
 			if (_stack.Count > 0)
 				return _stack.Peek();
 			else
 				return default(T);
+		}
+
+		public void SwitchTo(T state)
+		{
+			PopAll();
+			Push(state);
 		}
 
 		public void PopAll()
@@ -74,15 +99,14 @@ namespace CraftingLegends.Framework
 			}
 		}
 
-		// ================================================================================
-		//  update methods
-		// --------------------------------------------------------------------------------
-
+		/// <summary>
+		/// should be called by the class holding the StateMachine
+		/// </summary>
 		public void Update()
 		{
 			if (_stack.Count > 0)
 			{
-				_stack.Peek().Update();
+				_stack.Peek().OnUpdate();
 			}
 		}
 	}

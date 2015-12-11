@@ -15,7 +15,7 @@ namespace CraftingLegends.Framework
 
 		public static bool useBigFont = false;
 
-		public bool pointerIsOverUI
+		public static bool pointerIsOverUI
 		{
 			get
 			{
@@ -51,11 +51,9 @@ namespace CraftingLegends.Framework
 
 		public void Start()
 		{
-			// disable all states
-			for (int i = 0; i < transform.childCount; i++)
+			for (int i = 0; i < _states.Count; i++)
 			{
-				var child = transform.GetChild(i);
-				child.gameObject.SetActive(false);
+				_states[i].SetInactive();
 			}
 
 			if (MainBase.Instance != null)

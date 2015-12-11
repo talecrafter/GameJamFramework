@@ -51,6 +51,12 @@ namespace CraftingLegends.Framework
 					_buttons.Add(button);
 				}
 			}
+
+			foreach (var button in _allButtons)
+			{
+				button.onClick.AddListener(ButtonClick);
+
+			}
 		}
 
 		// ================================================================================
@@ -84,6 +90,16 @@ namespace CraftingLegends.Framework
 
 			// HACK: look into EventSystem.firstSelected in the future
 			EventSystem.current.SetSelectedGameObject(null, null);
+		}
+
+		public virtual void SetActive()
+		{
+			gameObject.SetActive(true);
+		}
+
+		public virtual void SetInactive()
+		{
+			gameObject.SetActive(false);
 		}
 
 		// ================================================================================
@@ -133,9 +149,22 @@ namespace CraftingLegends.Framework
 
 		}
 
+		public bool acceptsSecondaryButtons
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		// ================================================================================
 		//  utilities
 		// --------------------------------------------------------------------------------
+
+		private void ButtonClick()
+		{
+			MainBase.BaseAudioManager.PlayButtonSound();
+		}
 
 		protected void EnableAllButtons()
 		{

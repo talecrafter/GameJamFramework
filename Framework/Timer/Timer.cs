@@ -30,10 +30,18 @@ namespace CraftingLegends.Framework
 
 				if (p < 0)
 					p = 0;
-				if (p > 1.0f)
-					p = 1.0f;
+				if (p > 1f)
+					p = 1f;
 
 				return p;
+			}
+		}
+
+		public float invertedProgress
+		{
+			get
+			{
+				return 1f - progress;
 			}
 		}
 
@@ -50,6 +58,8 @@ namespace CraftingLegends.Framework
 		// --------------------------------------------------------------------------------
 
 		private float _duration = 3.0f;
+		public float duration { get { return _duration; } }
+
 		private float _elapsedTime = 0;
 
 		// ================================================================================
@@ -73,6 +83,16 @@ namespace CraftingLegends.Framework
 		public void Reset()
 		{
 			_elapsedTime = 0;
+		}
+
+		public void Stop()
+		{
+			_elapsedTime = _duration;
+		}
+
+		public void SetDuration(float duration)
+		{
+			_duration = duration;
 		}
 
 		public void SetRandomStart(float progress = 1.0f)

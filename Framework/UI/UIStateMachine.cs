@@ -100,13 +100,13 @@ namespace CraftingLegends.Framework
 		private void ActivateCurrent()
 		{
 			if (hasState)
-				(current as MonoBehaviour).gameObject.SetActive(true);
+				current.SetActive();
 		}
 
 		private void DeactivateCurrent()
 		{
 			if (hasState)
-				(current as MonoBehaviour).gameObject.SetActive(false);
-		}
+				current.SetInactive();
+        }
 	}
 }

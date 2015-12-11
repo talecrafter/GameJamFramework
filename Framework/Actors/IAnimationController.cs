@@ -4,7 +4,8 @@ namespace CraftingLegends.Framework
 {
 	interface IAnimationController
 	{
-		void FadeOut();
+		void FadeOut(float time = 1f);
+        void FadeOutAfterDeath();
 		void Reset();
 		void SetMaterialColor(Color color);
 	}

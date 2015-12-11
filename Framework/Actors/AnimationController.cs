@@ -32,7 +32,7 @@ namespace CraftingLegends.Framework
 		//  private
 		// --------------------------------------------------------------------------------
 
-		private Actor _actor;
+		private Actor2D _actor;
 		private Animator _animator;
 
 		private AvatarAnimation _currentAnimation = AvatarAnimation.idle;
@@ -48,9 +48,9 @@ namespace CraftingLegends.Framework
 		//  Unity methods
 		// --------------------------------------------------------------------------------
 
-		void Awake()
+		private void Awake()
 		{
-			_actor = GetComponent<Actor>();
+			_actor = GetComponent<Actor2D>();
 			if (_actor != null)
 				_actor.stateChanged += ActorStateChangedHandler;
 
@@ -69,21 +69,8 @@ namespace CraftingLegends.Framework
 			_isInitialized = true;
 		}
 
-		void Update()
+		private void Update()
 		{
-			// TODO: had to comment this because of main character having no walk animation when steered by Sequence
-			//if (_animator != null)
-			//{
-			//	if (BaseGameController.Instance.state == GameState.Running)
-			//	{
-			//		_animator.speed = 1.0f;
-			//	}
-			//	else
-			//	{
-			//		_animator.speed = 0f;
-			//	}
-			//}
-
 			// show fadeout when game is running or has ended
 			if (MainBase.Instance.state == GameState.Running || MainBase.Instance.state == GameState.Ended)
 			{
@@ -94,7 +81,7 @@ namespace CraftingLegends.Framework
 
 					if (_fadeInTimer.hasEnded)
 					{
-						SetMaterialColor(new Color(1.0f, 1.0f, 1.0f, 1f));
+						SetMaterialColor(Color.white);
 						_fadeInTimer = null;
 					}
 				}
@@ -105,7 +92,7 @@ namespace CraftingLegends.Framework
 
 					if (_fadeOutTimer.hasEnded)
 					{
-						SetMaterialColor(new Color(1.0f, 1.0f, 1.0f, 0f));
+						SetMaterialColor(Color.white.WithAlpha(0));
 						_fadeOutTimer = null;
 					}
 				}
@@ -116,7 +103,7 @@ namespace CraftingLegends.Framework
 		//  public methods
 		// --------------------------------------------------------------------------------
 
-		public void SetLookDirection(float direction)
+		public void SetVerticalLookDirection(float direction)
 		{
 			if (direction > 0)
 			{
@@ -142,23 +129,28 @@ namespace CraftingLegends.Framework
 			}
 		}
 
-		public void FadeIn()
+		public void FadeIn(float time = 1f)
 		{
-			SetMaterialColor(new Color(1.0f, 1.0f, 1.0f, 0f));
-			_fadeInTimer = new FadingTimer(1f, 1f);
+			ClearFading();
+			SetMaterialColor(Color.white.WithAlpha(0));
+			_fadeInTimer = new FadingTimer(time, time);
+			ApplyFadeIn();
 		}
 
-		public void FadeOut()
+		public void FadeOut(float time = 1f)
+		{
+			ClearFading();
+			_fadeOutTimer = new FadingTimer(0, time, time);
+			ApplyFadeOut();
+		}
+
+		public void FadeOutAfterDeath()
 		{
 			if (_fadeOutTimer == null)
 			{
-				_fadeOutTimer = new FadingTimer(0, Actor.TIME_UNTIL_DESTRUCTION, 2.0f);
+				ClearFading();
+				_fadeOutTimer = new FadingTimer(0, Actor2D.TIME_UNTIL_DESTRUCTION, 2.0f);
 			}
-		}
-
-		public void FadeOutFast(float time)
-		{
-			_fadeOutTimer = new FadingTimer(0f, time, time);
 		}
 
 		public void Reset()
@@ -169,15 +161,36 @@ namespace CraftingLegends.Framework
 					SetAnimation(AvatarAnimation.idle);
 				_currentAnimation = AvatarAnimation.idle;
 				_fadeOutTimer = null;
-				SetMaterialColor(new Color(1.0f, 1.0f, 1.0f, 1.0f));
+				SetMaterialColor(Color.white);
 			}
+		}
+
+		public void SetAnimatorController(RuntimeAnimatorController controller)
+		{
+			_animator.runtimeAnimatorController = controller;
+		}
+
+		public void SetSpeed(float speed)
+		{
+			_animator.speed = speed;
+		}
+
+		public void ResetSpeed()
+		{
+			_animator.speed = 1f;
 		}
 
 		// ================================================================================
 		//  private methods
 		// --------------------------------------------------------------------------------
 
-		void ActorStateChangedHandler(IActor activeActor, ActorState state)
+		private void ClearFading()
+		{
+			_fadeInTimer = null;
+			_fadeOutTimer = null;
+		}
+
+		private void ActorStateChangedHandler(IActor activeActor, ActorState state)
 		{
 			if (state == ActorState.Dead)
 			{
@@ -263,13 +276,13 @@ namespace CraftingLegends.Framework
 
 		private void ApplyFadeIn()
 		{
-			Color color = new Color(1.0f, 1.0f, 1.0f, _fadeInTimer.progress);
-			SetMaterialColor(color);
+			Color color = Color.white.WithAlpha(_fadeInTimer.progress);
+            SetMaterialColor(color);
 		}
 
 		private void ApplyFadeOut()
 		{
-			Color color = new Color(1.0f, 1.0f, 1.0f, _fadeOutTimer.progress);
+			Color color = Color.white.WithAlpha(_fadeOutTimer.progress);
 			SetMaterialColor(color);
 		}
 

@@ -6,12 +6,12 @@ using System;
 
 namespace CraftingLegends.Framework
 {
-	public class Actor : MonoBehaviour, IPooledObject, IActor, IHasHealth
+	public class Actor2D : MonoBehaviour, IPooledObject, IActor, IHasHealth
 	{
 		#region declarations and events
 
 		public const float MINIMUM_MOVEMENT_FOR_ANIMATIONS = 0.01f;
-		public const float TARGET_DISTANCE = 0.7f;
+		public const float TARGET_DISTANCE = 0.5f;
 		public const float TIME_UNTIL_DESTRUCTION = 10.0f;
 
 		// ================================================================================
@@ -64,8 +64,8 @@ namespace CraftingLegends.Framework
 
 				if (_state == ActorState.Disabled)
 				{
-					if (isDisabled != null)
-						isDisabled(this);
+					if (getsDisabled != null)
+						getsDisabled(this);
 				}
 
 			}
@@ -87,7 +87,7 @@ namespace CraftingLegends.Framework
 			get
 			{
 				if (_health == null)
-					health = new Energy(_maxHealth);
+					_health = new Energy(_maxHealth);
 
 				return _health;
 			}
@@ -108,11 +108,20 @@ namespace CraftingLegends.Framework
 		public float movementSpeed = 6.0f;
 
 		[HideInInspector]
-		public Target target;
+		public float verticalMovementDampening = 1f;
+
+		[HideInInspector]
+		public ActorTarget target;
 
 		public Vector2 lookDirection = Vector2.zero;
 
 		public Transform actionPivot;
+
+		// ================================================================================
+		//  global values
+		// --------------------------------------------------------------------------------
+
+		public static Color healingColor = new Color(0.58f, 0.91f, 0.82f);
 
 		// ================================================================================
 		//  getters and setters
@@ -197,7 +206,9 @@ namespace CraftingLegends.Framework
 		private Collider2D _collider2D;
 		private Timer _actionTimer = null;
 
-		private Vector3 _lastMovement = Vector3.zero;
+		private Vector2 _lastMovement = Vector2.zero;
+		private Vector2 _lastDirectMovement = Vector2.zero;
+		private int _gotDirectMovementInput = 0;
 		#endregion
 
 		// ================================================================================
@@ -212,15 +223,30 @@ namespace CraftingLegends.Framework
 			_rigidbody2D = GetComponent<Rigidbody2D>();
 			_collider2D = GetComponent<Collider2D>();
 			_animationController = _transform.GetInterface<IAnimationController>();
-			target = new Target(this, _transform);
+			target = new ActorTarget(this, _transform);
 
-			health = new Energy(_maxHealth);
+			if (_health == null)
+				health = new Energy(_maxHealth);
 
 			// set callback functions
 			GetEstimatedFuturePosition = EstimateFuturePosition;
 			deathExecutionHandler = DestroyAtDeath;
 
 			Reset();
+		}
+
+		void Update()
+		{
+			// we use this so direct movement input gets stopped at some point if there is silent communication from the input side
+			if (_gotDirectMovementInput > 0 && target.hasTarget)
+			{
+				_gotDirectMovementInput--;
+
+				if (_gotDirectMovementInput == 0)
+				{
+					StopMovement();
+				}
+			}
 		}
 
 		void FixedUpdate()
@@ -267,9 +293,16 @@ namespace CraftingLegends.Framework
 			{
 				if (!target.hasTarget)
 				{
-					isMoving = false;
-					state = ActorState.Idle;
-					return;
+					if (_lastDirectMovement != Vector2.zero && movementSpeed > 0)
+					{
+						Move(_lastDirectMovement);
+					}
+					else
+					{
+						isMoving = false;
+						state = ActorState.Idle;
+						return;
+					}
 				}
 				else
 				{
@@ -313,30 +346,31 @@ namespace CraftingLegends.Framework
 		public void MakeInActive()
 		{
 			target.DisableTarget();
-
 			state = ActorState.Disabled;
 		}
 
 		public void Disable()
 		{
-			target.DisableTarget();
-
-			state = ActorState.Disabled;
+			MakeInActive();
 
 			if (!_isInactiveInObjectPool)
 				Destroy(gameObject);
 		}
 
+		public void DisableAndFadeOut(float time)
+		{
+			MakeInActive();
+
+			if (_animationController != null)
+				_animationController.FadeOut(time);
+
+			if (!_isInactiveInObjectPool)
+				Destroy(gameObject, time);
+		}
+
 		public void Kill()
 		{
 			ApplyDamage(health.current);
-		}
-
-		public void SetToDead()
-		{
-			health.EmptySilently();
-
-			state = ActorState.Dead;
 		}
 
 		public void Reset()
@@ -383,12 +417,9 @@ namespace CraftingLegends.Framework
 			if (!isAlive)
 				return;
 
-			if (health.isFull)
-				return;
+			ShowDamageDisplay(0.25f, healingColor);
 
 			health.Add(amount);
-
-			//ShowDamageDisplay(0.3f, new Color(0.58f, 0.91f, 0.82f)); // turquoise color
 		}
 
 		#endregion
@@ -408,7 +439,7 @@ namespace CraftingLegends.Framework
 		}
 
 		// position as new target
-		public void SetTarget(Vector2 position, float distance, bool determined = false)
+		public void SetTarget(Vector2 position, float distance = TARGET_DISTANCE, bool determined = false)
 		{
 			if (!isAlive)
 				return;
@@ -420,7 +451,7 @@ namespace CraftingLegends.Framework
 		}
 
 		// other actor as new target, e.g. enemy or friendly unit to be healed
-		public void SetTarget(Actor otherActor, bool determined = false)
+		public void SetTarget(Actor2D otherActor, bool determined = false)
 		{
 			if (!isAlive)
 				return;
@@ -442,25 +473,49 @@ namespace CraftingLegends.Framework
 			target.DisableTarget();
 
 			if (moveDirection == Vector2.zero)
+			{
+				_lastDirectMovement = Vector2.zero;
+				StopMovement();
 				return;
+			}
 
 			if (moveDirection.sqrMagnitude > 1.0f)
 				moveDirection = moveDirection.normalized;
 
+			_gotDirectMovementInput = 4;
+			_lastDirectMovement = moveDirection;
+
 			Move(moveDirection);
 			if (moveDirection.x > 0)
-				SetDisplayDirection(true);
+				SetHorizontalDisplayDirection(true);
 			else if (moveDirection.x < 0)
-				SetDisplayDirection(false);
+				SetHorizontalDisplayDirection(false);
 
 			if (state == ActorState.Idle)
 				state = ActorState.Moving;
 		}
 
-		public void HaltMovement()
+		/// <summary>
+		/// stand still at current position and don't get moved around by other actors
+		/// used when in a passive state like dialogue
+		/// </summary>
+		public void Freeze()
+		{
+			StopMovement();
+			_rigidbody2D.isKinematic = true;
+		}
+
+		public void UnFreeze()
+		{
+			_rigidbody2D.isKinematic = false;
+		}
+
+		public void StopMovement()
 		{
 			if (isAlive)
 			{
+				_lastDirectMovement = Vector2.zero;
+
 				isMoving = false;
 				target.DisableTarget();
 
@@ -469,7 +524,7 @@ namespace CraftingLegends.Framework
 			}
 		}
 
-		public void TakeAction(Actor targetActor)
+		public void TakeAction(Actor2D targetActor)
 		{
 			if (!isAlive)
 				return;
@@ -497,19 +552,6 @@ namespace CraftingLegends.Framework
 		{
 			yield return StartCoroutine(enumeratedAction.Execute());
 			state = ActorState.Idle;
-		}
-
-		#endregion
-
-		#region helper methods
-
-		public Actor GetNearest(List<Actor> otherActors)
-		{
-			otherActors.Sort(
-				(firstObject, secondObject) =>
-				Vector2.SqrMagnitude(secondObject.position2D - position2D).CompareTo(Vector2.SqrMagnitude(firstObject.position2D - position2D)));
-
-			return otherActors.First();
 		}
 
 		#endregion
@@ -561,19 +603,20 @@ namespace CraftingLegends.Framework
 			if (target.isReached)
 			{
 				// attack if possible
-				if (target.type == Target.TargetType.Actor && TargetInReach()
+				if (target.type == ActorTarget.TargetType.Actor && TargetInReach()
 					&& action != null)
 				{
 					TakeAction(target.otherActor);
 					return;
 				}
 
-				HaltMovement(); // TODO: these two lines were disabled in Indomitable - why?
+				StopMovement();
 				return;
 			}
 
 			// get target direction
 			Vector2 targetLocation = target.GetCurrentTargetLocation();
+
 			Vector2 moveDirection = Utilities2D.GetNormalizedDirection(position2D, targetLocation);
 
 			Move(moveDirection);
@@ -599,7 +642,8 @@ namespace CraftingLegends.Framework
 			//}
 
 			// movement alternative 1
-			Vector3 movement = moveDirection * movementSpeed;
+			Vector2 movement = moveDirection * movementSpeed;
+			movement.y *= verticalMovementDampening;
 			_rigidbody2D.velocity = movement;
 			// also uncomment slowing of velocity in Update
 
@@ -655,7 +699,7 @@ namespace CraftingLegends.Framework
 		private void DestroyAtDeath()
 		{
 			if (_animationController != null)
-				_animationController.FadeOut();
+				_animationController.FadeOutAfterDeath();
 
 			// disable components
 			if (_collider2D != null)
@@ -686,7 +730,7 @@ namespace CraftingLegends.Framework
 
 		#region display methods
 
-		public void SetDisplayDirection(bool toTheRight)
+		public void SetHorizontalDisplayDirection(bool toTheRight)
 		{
 			if (toTheRight != directionRight)
 			{
@@ -694,13 +738,22 @@ namespace CraftingLegends.Framework
 			}
 		}
 
+		public void SetLookDirection(Vector2 direction)
+		{
+			lookDirection = direction;
+			if (direction.x > 0)
+			{
+				SetHorizontalDisplayDirection(true);
+			}
+			else if (direction.x < 0)
+			{
+				SetHorizontalDisplayDirection(false);
+			}
+		}
+
 		private void SetLookDirectionToTarget(Vector2 targetLocation)
 		{
-			// check direction for display purposes
-			if (targetLocation.x > _transform.position.x)
-				SetDisplayDirection(true);
-			if (targetLocation.x < _transform.position.x)
-				SetDisplayDirection(false);
+			SetLookDirection(targetLocation - position2D);
 		}
 
 		private void FlipDirection()
@@ -754,7 +807,7 @@ namespace CraftingLegends.Framework
 			gameObject.SetActive(false);
 		}
 
-		public event System.Action<IPooledObject> isDisabled;
+		public event System.Action<IPooledObject> getsDisabled;
 
 		private bool _isInactiveInObjectPool = false;
 		public bool isUsedByObjectPool

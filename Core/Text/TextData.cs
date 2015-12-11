@@ -212,22 +212,22 @@ namespace CraftingLegends.Core
 			}
 		}
 
-		//public void RemoveKey(string key)
-		//{
-		//	if (string.IsNullOrEmpty(key))
-		//		return;
+		public void RemoveKey(string key)
+		{
+			if (string.IsNullOrEmpty(key))
+				return;
 
-		//	for (int i = 0; i < TextManager.GetLanguages().Count; i++)
-		//	{
-		//		var languageData = _data[TextManager.GetLanguages()[i]];
-		//		if (languageData.ContainsKey(key))
-		//		{
-		//			languageData.Remove(key);
-		//		}
-		//	}
+			for (int i = 0; i < _languages.Count; i++)
+			{
+				var languageData = _textData[i];
+				if (languageData.ContainsKey(key))
+				{
+					languageData.Remove(key);
+				}
+			}
 
-		//	MarkAsChanged();
-		//}
+			MarkAsChanged();
+		}
 
 		#endregion
 

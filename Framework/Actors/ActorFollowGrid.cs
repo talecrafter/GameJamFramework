@@ -8,7 +8,7 @@ namespace CraftingLegends.Framework
 	{
 		void Start()
 		{
-			Actor actor = GetComponent<Actor>();
+			Actor2D actor = GetComponent<Actor2D>();
 			actor.target.SetPathField(FindObjectOfType<LevelGrid>());
 		}
 	}

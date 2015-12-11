@@ -53,7 +53,7 @@ namespace CraftingLegends.Core
 
             _activeObjects.Add(newObject);
 
-            newObject.isDisabled += TogglableObjectIsDisabled;
+            newObject.getsDisabled += ObjectGetsDisabled;
 
             return newObject;
         }
@@ -66,7 +66,7 @@ namespace CraftingLegends.Core
             //if (item is MonoBehaviour)
             //    (item as MonoBehaviour).transform.position = new Vector3(-1000.0f, -1000.0f, -1000.0f);
 
-            item.isDisabled -= TogglableObjectIsDisabled;
+            item.getsDisabled -= ObjectGetsDisabled;
 
             if (_activeObjects.Contains(item))
                 _activeObjects.Remove(item);
@@ -107,7 +107,7 @@ namespace CraftingLegends.Core
             return instance;
         }
 
-        private void TogglableObjectIsDisabled(IPooledObject obj)
+        private void ObjectGetsDisabled(IPooledObject obj)
         {
             Push(obj);
         }

@@ -22,7 +22,7 @@ namespace CraftingLegends.Core
 			_isActive = false;
 		}
 
-		public event System.Action<IPooledObject> isDisabled;
+		public event System.Action<IPooledObject> getsDisabled;
 
 		private bool _isUseByObjectPool = false;
 		public bool isUsedByObjectPool
@@ -37,12 +37,12 @@ namespace CraftingLegends.Core
 			}
 		}
 
-		public void NotifyDisabled()
+		public virtual void NotifyDisabled()
 		{
 			if (isUsedByObjectPool)
 			{
-				if (isDisabled != null)
-					isDisabled(this);
+				if (getsDisabled != null)
+					getsDisabled(this);
 			}
 			else
 			{
